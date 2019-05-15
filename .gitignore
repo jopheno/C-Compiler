@@ -1,0 +1,9 @@
+.vscode/*
+*.o
+*.ci
+build/*
+lex.yy.c
+bison.vcg
+bison.tab.h
+bison.tab.c
+*.DS_Store
