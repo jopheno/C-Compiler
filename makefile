@@ -9,7 +9,7 @@ SFLAGS=
 LIBS=
 EXECLIBS=-ll -ly
 
-OBJFILES = build/compiler.o build/symtab.o build/analyze.o build/cgen.o build/code.o build/util.o build/lex.yy.o build/bison.tab.o build/main.o
+OBJFILES = build/compiler.o build/symtab.o build/analyze.o build/cgen.o build/code.o build/util.o build/assembly.o build/lex.yy.o build/bison.tab.o build/main.o
 
 EXEC = exec
 
@@ -48,7 +48,7 @@ bison:
 
 clean:
 	@ echo '>> Removing previous build files:'
-	rm -f $(EXEC) lex.yy.c build/*.o bison.tab.c bison.tab.h bison.output bison.dot *.ci bison.vcg
+	rm -f $(EXEC) lex.yy.c LUA/example.ja LUA/output.mif build/*.o bison.tab.c bison.tab.h bison.output bison.dot *.ci bison.vcg
 	@ echo ' '
 
 cle:

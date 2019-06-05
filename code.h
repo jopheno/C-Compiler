@@ -37,7 +37,7 @@ Lno *remove_Stack(Tstack *stack);
 void inicialize_Stack_Op (TstackOp *stackOp);
 void insert_StackOp (TstackOp *stackOp, Arg operand);
 Arg  remove_StackOp(TstackOp *stackOp);
-void print_Node_List(Tlist * list);
+void fprint_Node_List(FILE* file, Tlist * list);
 char * newParam();
 void emitComment( char * c );
 void inicialize_FIFO_Args(FIFOArgs *arg);

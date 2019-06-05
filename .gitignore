@@ -7,3 +7,7 @@ bison.vcg
 bison.tab.h
 bison.tab.c
 *.DS_Store
+LUA/example.ja
+LUA/output.mif
+exec
+bison.output

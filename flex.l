@@ -64,12 +64,25 @@ char* getTokenName(TokenType t) {
 
 digit       [0-9]
 number      {digit}+
-letter      [a-zA-Z]
-identifier  {letter}+
+letter      [a-zA-Z_]
+id          [a-zA-Z0-9_]
+identifier  {id}+
 newline     \n
 whitespace  [ \t]+
 
+%x COMMENT_MULTI_BLOCK
+%x COMMENT_MONO_BLOCK
+
 %%
+
+"/*"                          {BEGIN(COMMENT_MULTI_BLOCK);}
+<COMMENT_MULTI_BLOCK>"*/"     {BEGIN(INITIAL);}
+<COMMENT_MULTI_BLOCK>"\n"     {lines_number++;}
+<COMMENT_MULTI_BLOCK>.        {}
+
+"//"                          {BEGIN(COMMENT_MONO_BLOCK);}
+<COMMENT_MONO_BLOCK>"\n"      {lines_number++; BEGIN(INITIAL);}
+<COMMENT_MONO_BLOCK>.         {}
 
 "import"        {return IMPORT;}
 
@@ -105,22 +118,6 @@ whitespace  [ \t]+
 {identifier}    {return ID;}
 {newline}       {lines_number++;}
 {whitespace}    {/* skip whitespace */}
-"/*"             { char c, last_c;
-                  do
-                  { last_c = c;
-                    c = input();
-                    if (c == EOF) break;
-                    if (c == '\n') lines_number++;
-                  } while (c != '/' || last_c != '*');
-                }
-"//"             { char current_char;
-                  do
-                  {
-                    current_char = input();
-                    if (current_char == EOF) break;
-                    if (current_char == '\n') lines_number++;
-                  } while (current_char != '\n');
-                }
 .               {return ERROR;}
 
 %%

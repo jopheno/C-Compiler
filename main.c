@@ -11,30 +11,36 @@
 #include <stdbool.h>
 
 int main(int argc, const char * argv[]) {
-    // insert code here...
+	// insert code here...
 
-    if (argc < 2) {
-      printf("> usage: %s <filename> [FLAGs: --TRACE --SHOW_TREE]\n", argv[0]);
-      return -1;
-    }
+	if (argc < 2) {
+		printf("> usage: %s <filename> [FLAGs: --DEBUG -o <output_file>]\n", argv[0]);
+		return -1;
+	}
 
-    char* file_name = argv[1];
+	char* file_name = argv[1];
+	char* output_file_name = NULL;
 
-    bool trace = false;
-    bool show_tree = false;
+	bool debug_mode = false;
 
-    if (argc > 2) {
-      for (int i = 2; i<argc; i++) {
-        if (strcmp(argv[i], "--TRACE") == 0) {
-          trace = true;
-        }
-        if (strcmp(argv[i], "--SHOW_TREE") == 0) {
-          show_tree = true;
-        }
-      }
-    }
+	if (argc > 2) {
+		for (int i = 2; i<argc; i++) {
+			if (strcmp(argv[i], "--DEBUG") == 0)
+				debug_mode = true;
 
-    runCompiler(file_name, trace, show_tree);
+			if (strcmp(argv[i], "-o") == 0) {
+				if (argc > i+1) {
+					output_file_name = (char*) malloc(22*sizeof(char));
+					strcpy(output_file_name, argv[i+1]);
+				} else {
+					printf("> usage: %s <filename> [FLAGs: --DEBUG -o <output_file>]\n", argv[0]);
+					return -1;
+				}
+			}
+		}
+	}
 
-    return 0;
+	runCompiler(file_name, debug_mode, output_file_name);
+
+	return 0;
 }

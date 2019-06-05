@@ -18,6 +18,7 @@ TypeRegTemp ArrayTemp[11];
 int i;
 TypeRegTemp aux;
 char *lreg;
+extern int location;
 
 /*****************************************************/
 /* Auxiliary Variables */
@@ -966,6 +967,12 @@ char * getUltimateReg()
             if(strcmp(ArrayTemp[i].usedBy, reg)==0)
             {
                 ArrayTemp[i].state = 0;
+                char* t_name = new(i);
+                BucketList bl = st_lookup(t_name, "global");
+
+                if (bl == NULL)
+                    st_insert(t_name, VariableDeclaredSt, Integer, -1, location++, "global", 0, 0);
+
                 return ArrayTemp[i];
             }
         }
@@ -1284,7 +1291,7 @@ void generate_limited_temporaries(Tlist *list)
  * file name as a comment in the code file
  */
 
-void codeGen(TreeNode * syntaxTree, char * codefile)
+void codeGen(TreeNode * syntaxTree, FILE* output)
 {
 
     /* Inicialize list of nodes for intermediate code generation */
@@ -1301,7 +1308,10 @@ void codeGen(TreeNode * syntaxTree, char * codefile)
     //inicialize_List_Label(&LISTLABEL);
     /* generate code for C minus program */
     //inicialize processor through function main
+    
+    // The Sythesis Module will be responsible for adding call to the main function.
 
+    /*
         aux1.addr.string = "call";
         aux1.type=String;
         aux2.addr.variable=st_lookup("main", "global");
@@ -1312,6 +1322,7 @@ void codeGen(TreeNode * syntaxTree, char * codefile)
         aux4.type = String;
         L=insert_Node_List(&LIST, aux1, aux2, aux3, aux4);
 
+    */
 
     /*************************************************************/
 
@@ -1348,9 +1359,9 @@ void codeGen(TreeNode * syntaxTree, char * codefile)
     generate_limited_temporaries(&LIST);
 
     /*Print nodes from Intermediate Code*/
-    printf("\n%s\n\n","******** INTERMEDIATE CODE **********");
-    print_Node_List(&LIST);
-    printf("\n");
+    fprintf(output, "\n%s\n\n","******** INTERMEDIATE CODE **********");
+    fprint_Node_List(output, &LIST);
+    fprintf(output, "\n");
 
     //print_List_Label(&LISTLABEL);
     /* finish */

@@ -202,32 +202,32 @@ Lno * insert_Node_List(Tlist* list, Arg a, Arg b, Arg c, Arg d)
 }
 
 
-void print_Node_List(Tlist * list)
+void fprint_Node_List(FILE* file, Tlist * list)
 {
     Lno *p1, *p2;
-    printf("%i \n", list->length);
+    fprintf(file, "%i \n", list->length);
     if(list!=NULL)
     {
         p2=list->last;
         for( p1=list->first; p1!=p2; p1=p1->prox)
         {
-            printf("[%d] ", p1->id);
+            fprintf(file, "[%d] ", p1->id);
             switch (p1->op.type)
             {
             case 0:
                 if(p1->op.addr.variable!=NULL)
                 {
-                    printf("(%s ,", p1->op.addr.variable->name);
+                    fprintf(file, "(var=%s ,", p1->op.addr.variable->name);
                 }
                 break;
             case 1:
-                printf("(%s ,", p1->op.addr.string);
+                fprintf(file, "(str=%s ,", p1->op.addr.string);
                 break;
             case 2:
-                printf("(%d ,", p1->op.addr.constant);
+                fprintf(file, "(const=%d ,", p1->op.addr.constant);
                 break;
             default:
-                printf( "(%s ,", "ERROR");
+                fprintf(file, "(err=%s ,", "ERROR");
                 break;
             }
             switch (p1->arg1.type)
@@ -235,17 +235,17 @@ void print_Node_List(Tlist * list)
             case 0:
                 if(p1->arg1.addr.variable!=NULL)
                 {
-                    printf("%s ,", p1->arg1.addr.variable->name);
+                    fprintf(file, "var=%s ,", p1->arg1.addr.variable->name);
                 }
                 break;
             case 1:
-                printf( "%s ,", p1->arg1.addr.string, p1->arg1.address);
+                fprintf(file, "str=%s ,", p1->arg1.addr.string, p1->arg1.address);
                 break;
             case 2:
-                printf( "%d ,", p1->arg1.addr.constant);
+                fprintf(file, "const=%d ,", p1->arg1.addr.constant);
                 break;
             default:
-                printf( "%s ,", "ERROR");
+                fprintf(file, "err=%s ,", "ERROR");
                 break;
             }
             switch (p1->arg2.type)
@@ -253,17 +253,17 @@ void print_Node_List(Tlist * list)
             case 0:
                 if(p1->arg2.addr.variable!=NULL)
                 {
-                    printf("%s ,", p1->arg2.addr.variable->name);
+                    fprintf(file, "var=%s ,", p1->arg2.addr.variable->name);
                 }
                 break;
             case 1:
-                printf( "%s ,", p1->arg2.addr.string);
+                fprintf(file, "str=%s ,", p1->arg2.addr.string);
                 break;
             case 2:
-                printf( "%d ,", p1->arg2.addr.constant);
+                fprintf(file, "const=%d ,", p1->arg2.addr.constant);
                 break;
             default:
-                printf( "%s ,", "ERROR");
+                fprintf(file, "err=%s ,", "ERROR");
                 break;
             }
             switch (p1->result.type)
@@ -271,17 +271,17 @@ void print_Node_List(Tlist * list)
             case 0:
                 if(p1->result.addr.variable!=NULL)
                 {
-                    printf("%s )\n", p1->result.addr.variable->name);
+                    fprintf(file, "var=%s )\n", p1->result.addr.variable->name);
                 }
                 break;
             case 1:
-                printf( "%s )\n", p1->result.addr.string);
+                fprintf(file, "str=%s )\n", p1->result.addr.string);
                 break;
             case 2:
-                printf( "%d )\n", p1->result.addr.constant);
+                fprintf(file, "const=%d )\n", p1->result.addr.constant);
                 break;
             default:
-                printf( "%s )\n", "ERROR");
+                fprintf(file, "err=%s )\n", "ERROR");
                 break;
             }
 
@@ -290,23 +290,23 @@ void print_Node_List(Tlist * list)
         /*Print list->last */
         if(p2!=NULL)
         {
-            printf("[%d] ", p2->id);
+            fprintf(file, "[%d] ", p2->id);
             switch (p2->op.type)
             {
             case 0:
                 if(p2->op.addr.variable!=NULL)
                 {
-                    printf("(%s ,", p2->op.addr.variable->name);
+                    fprintf(file, "(%s ,", p2->op.addr.variable->name);
                 }
                 break;
             case 1:
-                printf("(%s ,", p2->op.addr.string);
+                fprintf(file, "(%s ,", p2->op.addr.string);
                 break;
             case 2:
-                printf("(%d ,", p2->op.addr.constant);
+                fprintf(file, "(%d ,", p2->op.addr.constant);
                 break;
             default:
-                printf( "(%s ,", "ERROR");
+                fprintf(file, "(%s ,", "ERROR");
                 break;
             }
             switch (p2->arg1.type)
@@ -314,17 +314,17 @@ void print_Node_List(Tlist * list)
             case 0:
                 if(p2->arg1.addr.variable!=NULL)
                 {
-                    printf("%s ,", p2->arg1.addr.variable->name);
+                    fprintf(file, "%s ,", p2->arg1.addr.variable->name);
                 }
                 break;
             case 1:
-                printf( "%s ,", p2->arg1.addr.string);
+                fprintf(file, "%s ,", p2->arg1.addr.string);
                 break;
             case 2:
-                printf( "%d ,", p2->arg1.addr.constant);
+                fprintf(file, "%d ,", p2->arg1.addr.constant);
                 break;
             default:
-                printf( "%s ,", "ERROR");
+                fprintf(file, "%s ,", "ERROR");
                 break;
             }
             switch (p2->arg2.type)
@@ -332,17 +332,17 @@ void print_Node_List(Tlist * list)
             case 0:
                 if(p2->arg2.addr.variable!=NULL)
                 {
-                    printf("%s ,", p2->arg2.addr.variable->name);
+                    fprintf(file, "%s ,", p2->arg2.addr.variable->name);
                 }
                 break;
             case 1:
-                printf( "%s ,", p2->arg2.addr.string);
+                fprintf(file, "%s ,", p2->arg2.addr.string);
                 break;
             case 2:
-                printf( "%d ,", p2->arg2.addr.constant);
+                fprintf(file, "%d ,", p2->arg2.addr.constant);
                 break;
             default:
-                printf( "%s ,", "ERROR");
+                fprintf(file, "%s ,", "ERROR");
                 break;
             }
             switch (p2->result.type)
@@ -350,17 +350,17 @@ void print_Node_List(Tlist * list)
             case 0:
                 if(p2->result.addr.variable!=NULL)
                 {
-                    printf("%s )\n", p2->result.addr.variable->name);
+                    fprintf(file, "%s )\n", p2->result.addr.variable->name);
                 }
                 break;
             case 1:
-                printf( "%s )\n", p2->result.addr.string);
+                fprintf(file, "%s )\n", p2->result.addr.string);
                 break;
             case 2:
-                printf( "%d )\n", p2->result.addr.constant);
+                fprintf(file, "%d )\n", p2->result.addr.constant);
                 break;
             default:
-                printf( "%s )\n", "ERROR");
+                fprintf(file, "%s )\n", "ERROR");
                 break;
             }
         }

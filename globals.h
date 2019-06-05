@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <regex.h>
 
 #ifndef YYPARSER
 

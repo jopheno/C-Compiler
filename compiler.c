@@ -5,6 +5,7 @@
 #include "globals.h"
 #include "lex.h"
 #include "util.h"
+#include "assembly.h"
 #include "bison.tab.h"
 
 int EchoSource = FALSE;
@@ -18,87 +19,118 @@ int Error = FALSE;
 FILE * source;
 FILE * listing;
 FILE * code;
+FILE * ja_file;
+FILE * bison_output;
 
 int lines_number = 0;
 
+extern Tlist LIST;
 
-int runCompiler(char* source_file, bool trace, bool show_tree) {
 
-    if (trace) {
-      TraceScan = TRUE;
-    }
+int runCompiler(char* source_file, bool debug_mode, char* output_file) {
 
-    // If forgot to put extension .cc, auto insert.
-    if (strchr (source_file, '.') == NULL)
-        strcat(source_file,".cc");
+	if (debug_mode) {
+		TraceScan = TRUE;
+	}
 
-    source = fopen(source_file,"r");
-    if (source==NULL)
-    {
-        fprintf(stderr,"File %s not found\n",source_file);
-        exit(1);
-    }
+	// If forgot to put extension .cc, auto insert.
+	if (strchr (source_file, '.') == NULL)
+			strcat(source_file,".cc");
 
-    listing = stdout;
+	source = fopen(source_file,"r");
+	if (source==NULL)
+	{
+		fprintf(stderr,"File %s not found\n",source_file);
+		exit(1);
+	}
 
-    Token tok = getToken();
-  
-    bool lexical_errors = false;
+	if (debug_mode)
+		bison_output = stdout;
+	else {
+		#ifdef _WIN32
+		bison_output = fopen("NUL", "w");
+		#elif __linux__
+		bison_output = fopen("/dev/null", "w");
+		#elif __APPLE__
+		bison_output = fopen("/dev/null", "w");
+		#endif
+	}
 
-    while(tok.type != ENDFILE) {
+	// This is used to show ERROR messages to STDERR
+	listing = stderr;
+	// This is used to redirect code and others debug info to STDOUT
+	code = bison_output;
 
-        if (tok.type == ERROR) {
-          fprintf(stderr, "> Lexical error found at line %d near '%s' classified as '%s'\n", lines_number, tok.lexical_unit, getTokenName(tok.type));
-          lexical_errors = true;
-        }
+	//exit(-1);
 
-        tok = getToken();
-    }
+	Token tok = getToken();
 
-    //if (lexical_errors) return 1;
+	bool lexical_errors = false;
 
-    lines_number = 1;
-    fprintf(stdout, ">> Initializing Bison ...\n");
+	while(tok.type != ENDFILE) {
 
-    openFile(source_file);
+		if (tok.type == ERROR) {
+			fprintf(stderr, "> Lexical error found at line %d near '%s' classified as '%s'\n", lines_number, tok.lexical_unit, getTokenName(tok.type));
+			lexical_errors = true;
+		}
 
-    TreeNode * syntaxTree;
+		tok = getToken();
+	}
 
-    syntaxTree = parse();
+	lines_number = 1;
+	fprintf(stdout, ">> Initializing Bison ...\n");
 
-    if (Error) return 1;
+	openFile(source_file);
 
-    if (show_tree)
-      printTreeC(syntaxTree);
+	TreeNode * syntaxTree;
 
-    printf("Building Symbol Table...\n");
+	syntaxTree = parse();
 
-    TraceAnalyze = TRUE;
-    buildSymtab(syntaxTree);
+	if (Error) return 1;
 
-    //if (Error) return 1;
+	if (debug_mode)
+		printTreeC(syntaxTree);
 
-    printf("Checking Types...\n");
+	printf(">> Building symbols table...\n");
 
-    typeCheck(syntaxTree);
+	if (debug_mode)
+		TraceAnalyze = TRUE;
 
-    if (Error) return 1;
+	buildSymtab(syntaxTree);
 
-    printf("Type Checking Finished\n");
+	printf(">> Checking types...\n");
 
-    char * codefile;
-    int fnlen = strcspn(source_file,".");
-    codefile = (char *) calloc(fnlen+4, sizeof(char));
-    strncpy(codefile,source_file,fnlen);
-    strcat(codefile,".ci");
-    code = fopen(codefile,"w");
-    if (code == NULL)
-    { printf("Unable to open %s\n",codefile);
-      exit(1);
-    }
-    printf("Trying to generate CI at %s\n", codefile);
-    codeGen(syntaxTree,codefile);
-    fclose(code);
+	typeCheck(syntaxTree);
 
-    return 1;
+	if (Error) return 1;
+
+	codeGen(syntaxTree, bison_output);
+
+	if (debug_mode)
+		printSymTab(stdout);
+	
+	char* ja_file_name = "./LUA/example.ja";
+
+	if (output_file != NULL)
+		ja_file_name = output_file;
+
+	ja_file = fopen(ja_file_name,"w");
+	if (ja_file == NULL)
+	{ 
+		printf("Unable to open %s\n",ja_file_name);
+		exit(1);
+	}
+
+	init_assembly(ja_file);
+
+	printf(">> Generating JA at ['%s']...\n", ja_file_name);
+
+	generate_assembly(&LIST);
+
+	printf("\n>>> DONE !\n\n");
+
+	fclose(bison_output);
+	fclose(ja_file);
+
+	return 1;
 }

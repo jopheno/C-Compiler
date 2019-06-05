@@ -78,10 +78,11 @@ void st_insert( char * name, StructureId stID, int DataType, int lineno, int loc
 BucketList st_lookup ( char * name, char * scope)
 { int h = hash(name);
   BucketList l =  hashTable[h];
-while ((l != NULL) && !((strcmp(name,l->name) == 0) && ((strcmp(l->scope,"global")== 0) || (strcmp(l->scope,scope) == 0))))
-    	l = l->next;
-  	if (l == NULL) return NULL;
-  	else return l;
+  while ((l != NULL) && !((strcmp(name,l->name) == 0) && ((strcmp(l->scope,"global")== 0) || (strcmp(l->scope,scope) == 0))))
+    l = l->next;
+
+  if (l == NULL) return NULL;
+  else return l;
 }
 /* Procedure printSymTab prints a formatted
  * listing of the symbol table contents
@@ -108,27 +109,32 @@ void printSymTab(FILE * listing)
   fprintf(listing,"Variable Name   Scope Function   StructureID          DataType     Location  passByref  Line Numbers\n");
   fprintf(listing,"-------------   --------------   -----------         ----------    --------  --------   ------------\n");
   for (i=0;i<SIZE;++i)
-  { if (hashTable[i] != NULL)
-    { BucketList l = hashTable[i];
+  { 
+  
+    if (hashTable[i] != NULL)
+    { 
+      BucketList l = hashTable[i];
       while (l != NULL)
-      { LineList t = l->lines;
+      { 
+        LineList t = l->lines;
         fprintf(listing,"%-18s ",l->name);
-	fprintf(listing,"%-14s ",l->scope);
-  char * structureType = getStructureType(l->structureid);
-	fprintf(listing,"%-18s ", structureType);
-	if(l->datatype==0)
-	fprintf(listing,"%10s ","Void");
-	if(l->datatype==1)
-	fprintf(listing,"%10s ","Integer");
-	if(l->datatype==2)
-	fprintf(listing,"%10s ","Boolean");
+	      fprintf(listing,"%-14s ",l->scope);
+        char * structureType = getStructureType(l->structureid);
+	      fprintf(listing,"%-18s ", structureType);
+	      if(l->datatype==0)
+          fprintf(listing,"%10s ","Void");
+        if(l->datatype==1)
+          fprintf(listing,"%10s ","Integer");
+        if(l->datatype==2)
+          fprintf(listing,"%10s ","Boolean");
+
         fprintf(listing,"%10d  ",l->memloc);
         fprintf(listing,"%7d  ",l->passBYreference);
         while (t != NULL)
         { fprintf(listing,"%4d ",t->line_number);
           t = t->next;
         }
-	fprintf(listing,"\n");
+        fprintf(listing,"\n");
         l = l->next;
       }
     }

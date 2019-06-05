@@ -11,7 +11,6 @@
 
 #include "globals.h"
 #include "lex.h"
-//#include "parse.h"
 #include "util.h"
 
 extern int lines_number;
@@ -27,6 +26,8 @@ extern char tokenString[MAXTOKENLEN+1];
 
 int STOP_PARSING = 0;
 
+extern FILE* bison_output;
+
 %}
 
 %start program
@@ -40,10 +41,10 @@ int STOP_PARSING = 0;
 
 %% /* Grammar for TINY */
 
-program           : decl_list {printf("[PROGRAM]\n"); savedTree = $1; }
+program           : decl_list {fprintf(bison_output, "[PROGRAM]\n"); savedTree = $1; }
                   ;
 
-decl_list         : decl_list decl {printf("[decl_list->decl_list decl]\n");
+decl_list         : decl_list decl {fprintf(bison_output, "[decl_list->decl_list decl]\n");
                         YYSTYPE t = $1;
 
                         if(t != NULL) {
@@ -55,34 +56,34 @@ decl_list         : decl_list decl {printf("[decl_list->decl_list decl]\n");
                           $$ = $2;
                         }
                   }
-                  | decl {printf("[decl_list->decl]\n");
+                  | decl {fprintf(bison_output, "[decl_list->decl]\n");
                       $$ = $1;
                   }
                   ;
 
-decl              : var_decl {printf("[decl->var_decl]\n"); $$ = $1; }
-                  | func_decl {printf("[decl->func_decl]\n"); $$ = $1; }
-                  | ERROR {printf("[decl->ERROR]\n"); $$ = NULL; yyerrok; }
+decl              : var_decl {fprintf(bison_output, "[decl->var_decl]\n"); $$ = $1; }
+                  | func_decl {fprintf(bison_output, "[decl->func_decl]\n"); $$ = $1; }
+                  | ERROR {fprintf(bison_output, "[decl->ERROR]\n"); $$ = NULL; yyerrok; }
                   ;
 
-tipo_espec        : INT { printf("[tipo_espec->INT]\n");
+tipo_espec        : INT { fprintf(bison_output, "[tipo_espec->INT]\n");
                       $$ = newExpNode(TypeK);
                       $$->type = Integer;
                   }
-                  | VOID { printf("[tipo_espec->VOID]\n");
+                  | VOID { fprintf(bison_output, "[tipo_espec->VOID]\n");
                     $$ = newExpNode(TypeK);
                     $$->type = Void;
                   }
                   ;
 
-var_decl          : tipo_espec identificador SEMI { printf("[var_decl->tipo_espec identificador SEMI]\n");
+var_decl          : tipo_espec identificador SEMI { fprintf(bison_output, "[var_decl->tipo_espec identificador SEMI]\n");
 
                       $$ = newExpNode(VariableK);
                       $$->type = $1->type;
                       $$->attr.name = $2->attr.name;
                       //$$->child[0] = $1;
                   }
-                  | tipo_espec identificador LBRACKET numero RBRACKET SEMI {printf("[var_decl->tipo_espec identificador LBRACKET number RBRACKET SEMI]");
+                  | tipo_espec identificador LBRACKET numero RBRACKET SEMI {fprintf(bison_output, "[var_decl->tipo_espec identificador LBRACKET number RBRACKET SEMI]");
                     $$ = newExpNode(VectorK);
                     $$->type = $1->type;
                     $$->attr.name = $2->attr.name;
@@ -90,7 +91,7 @@ var_decl          : tipo_espec identificador SEMI { printf("[var_decl->tipo_espe
                   }
                   ;
 
-func_decl         : tipo_espec identificador LPAREN params RPAREN comp_decl { printf("[func_decl->tipo_espec identificador LPAREN params RPAREN comp_decl]\n");
+func_decl         : tipo_espec identificador LPAREN params RPAREN comp_decl { fprintf(bison_output, "[func_decl->tipo_espec identificador LPAREN params RPAREN comp_decl]\n");
                       $$ = newStmtNode(FunctionK);
                       $$->type = $1->type;
                       $$->attr.name = $2->attr.name;
@@ -99,13 +100,13 @@ func_decl         : tipo_espec identificador LPAREN params RPAREN comp_decl { pr
                   }
                   ;
 
-params            : lista_params { printf("[params->lista_params]\n"); $$ = $1; }
-                  | VOID { printf("[params->VOID]\n"); $$ = newStmtNode(ParamK);
+params            : lista_params { fprintf(bison_output, "[params->lista_params]\n"); $$ = $1; }
+                  | VOID { fprintf(bison_output, "[params->VOID]\n"); $$ = newStmtNode(ParamK);
                            $$->attr.name="void";}
                   | { $$ = NULL;}
                   ;
 
-lista_params      : lista_params COMMA param { printf("[lista_params->lista_params COMMA param]\n");
+lista_params      : lista_params COMMA param { fprintf(bison_output, "[lista_params->lista_params COMMA param]\n");
                     YYSTYPE t = $1;
                     if (t != NULL) {
                       while(t->sibling != NULL)
@@ -120,12 +121,12 @@ lista_params      : lista_params COMMA param { printf("[lista_params->lista_para
                   | param { $$ = $1; }
                   ;
 
-param             : tipo_espec identificador { printf("[param->tipo_espec identificador]\n");
+param             : tipo_espec identificador { fprintf(bison_output, "[param->tipo_espec identificador]\n");
                     $$ = newStmtNode(ParamK);
                     $$->type = $1->type;
                     $$->attr.name = $2->attr.name;
                   }
-                  | tipo_espec identificador LBRACKET RBRACKET { printf("[param->tipo_espec identificador LBRACKET RBRACKET]\n");
+                  | tipo_espec identificador LBRACKET RBRACKET { fprintf(bison_output, "[param->tipo_espec identificador LBRACKET RBRACKET]\n");
                     $$ = newStmtNode(ParamK);
                     $$->type = $1->type;
                     $$->attr.name = $2->attr.name;
@@ -136,7 +137,7 @@ param             : tipo_espec identificador { printf("[param->tipo_espec identi
                   }
                   ;
 
-comp_decl         : LCBRACE local_decl lista_statement RCBRACE { printf("[comp_decl->LCBRACE local_decl lista_statement RCBRACE]\n");
+comp_decl         : LCBRACE local_decl lista_statement RCBRACE { fprintf(bison_output, "[comp_decl->LCBRACE local_decl lista_statement RCBRACE]\n");
                     YYSTYPE t = $2;
 
                     if (t != NULL) {
@@ -149,12 +150,12 @@ comp_decl         : LCBRACE local_decl lista_statement RCBRACE { printf("[comp_d
                       $$ = $3;
                     }
                   }
-                  | LCBRACE local_decl RCBRACE { printf("[comp_decl->LCBRACE local_decl RCBRACE]\n"); $$ = $2; }
-                  | LCBRACE lista_statement RCBRACE { printf("[comp_decl->LCBRACE lista_statement RCBRACE]\n"); $$ = $2; }
-                  | LCBRACE RCBRACE { printf("[comp_decl->LCBRACE RCBRACE]\n"); $$ = NULL; }
+                  | LCBRACE local_decl RCBRACE { fprintf(bison_output, "[comp_decl->LCBRACE local_decl RCBRACE]\n"); $$ = $2; }
+                  | LCBRACE lista_statement RCBRACE { fprintf(bison_output, "[comp_decl->LCBRACE lista_statement RCBRACE]\n"); $$ = $2; }
+                  | LCBRACE RCBRACE { fprintf(bison_output, "[comp_decl->LCBRACE RCBRACE]\n"); $$ = NULL; }
                   ;
 
-local_decl        : local_decl var_decl { printf("[local_decl->local_decl var_decl]\n");
+local_decl        : local_decl var_decl { fprintf(bison_output, "[local_decl->local_decl var_decl]\n");
                     YYSTYPE t = $1;
                     if (t != NULL) {
                       while(t->sibling != NULL)
@@ -166,21 +167,21 @@ local_decl        : local_decl var_decl { printf("[local_decl->local_decl var_de
                       $$ = $2;
                     }
                   }
-                  | var_decl { printf("[local_decl->var_decl]\n"); $$ = $1; }
+                  | var_decl { fprintf(bison_output, "[local_decl->var_decl]\n"); $$ = $1; }
                   //| /* vazio */ {}
                   ;
 
-exp_decl          : exp SEMI { printf("[exp_decl->exp SEMI]\n"); $$ = $1; }
-                  | SEMI { printf("[exp_decl->SEMI]\n"); $$ = NULL; }
+exp_decl          : exp SEMI { fprintf(bison_output, "[exp_decl->exp SEMI]\n"); $$ = $1; }
+                  | SEMI { fprintf(bison_output, "[exp_decl->SEMI]\n"); $$ = NULL; }
                   ;
 
-select_decl       : IF LPAREN exp RPAREN statement { printf("[select_decl->IF LPAREN exp RPAREN statement]\n");
+select_decl       : IF LPAREN exp RPAREN statement { fprintf(bison_output, "[select_decl->IF LPAREN exp RPAREN statement]\n");
                     $$ = newStmtNode(IfK);
                     $$->type = $3->type;
                     $$->child[0] = $3;
                     $$->child[1] = $5;
                   }
-                  | IF LPAREN exp RPAREN statement ELSE statement { printf("[select_decl->IF LPAREN exp RPAREN statement ELSE statement]\n");
+                  | IF LPAREN exp RPAREN statement ELSE statement { fprintf(bison_output, "[select_decl->IF LPAREN exp RPAREN statement ELSE statement]\n");
                     $$ = newStmtNode(IfK);
                     $$->type = $3->type;
                     $$->child[0] = $3;
@@ -189,7 +190,7 @@ select_decl       : IF LPAREN exp RPAREN statement { printf("[select_decl->IF LP
                   }
                   ;
 
-iter_decl         : WHILE LPAREN exp RPAREN statement { printf("[iter_decl->WHILE LPAREN exp RPAREN statement]\n");
+iter_decl         : WHILE LPAREN exp RPAREN statement { fprintf(bison_output, "[iter_decl->WHILE LPAREN exp RPAREN statement]\n");
                     $$ = newStmtNode(WhileK);
                     $$->type = $3->type;
                     $$->child[0] = $3;
@@ -197,18 +198,18 @@ iter_decl         : WHILE LPAREN exp RPAREN statement { printf("[iter_decl->WHIL
                   }
                   ;
 
-ret_decl          : RETURN SEMI { printf("[ret_decl->RETURN SEMI]\n");
+ret_decl          : RETURN SEMI { fprintf(bison_output, "[ret_decl->RETURN SEMI]\n");
                     $$ = newStmtNode(ReturnK);
                     $$->type = Void;
                   }
-                  | RETURN exp SEMI { printf("[ret_decl->RETURN exp SEMI]\n");
+                  | RETURN exp SEMI { fprintf(bison_output, "[ret_decl->RETURN exp SEMI]\n");
                     $$ = newStmtNode(ReturnK);
                     $$->type = $2->type;
                     $$->child[0] = $2;
                   }
                   ;
 
-lista_statement   : lista_statement statement { printf("[lista_statement->lista_statement statement]\n");
+lista_statement   : lista_statement statement { fprintf(bison_output, "[lista_statement->lista_statement statement]\n");
                     YYSTYPE t = $1;
                     if (t != NULL) {
                       while(t->sibling != NULL)
@@ -220,69 +221,69 @@ lista_statement   : lista_statement statement { printf("[lista_statement->lista_
                       $$ = $2;
                     }
                   }
-                  | statement {  printf("[lista_statement->statement]\n"); $$ = $1; }
+                  | statement {  fprintf(bison_output, "[lista_statement->statement]\n"); $$ = $1; }
                   //| /* vazio */ {}
                   ;
 
-statement         : exp_decl { printf("[statement->exp_decl]\n"); $$ = $1; }
-                  | comp_decl { printf("[statement->comp_decl]\n"); $$ = $1; }
-                  | select_decl { printf("[statement->select_decl]\n"); $$ = $1; }
-                  | iter_decl { printf("[statement->iter_decl]\n"); $$ = $1; }
-                  | ret_decl { printf("[statement->ret_decl]\n"); $$ = $1; }
+statement         : exp_decl { fprintf(bison_output, "[statement->exp_decl]\n"); $$ = $1; }
+                  | comp_decl { fprintf(bison_output, "[statement->comp_decl]\n"); $$ = $1; }
+                  | select_decl { fprintf(bison_output, "[statement->select_decl]\n"); $$ = $1; }
+                  | iter_decl { fprintf(bison_output, "[statement->iter_decl]\n"); $$ = $1; }
+                  | ret_decl { fprintf(bison_output, "[statement->ret_decl]\n"); $$ = $1; }
                   ;
 
-var               : identificador { printf("[var->identificador]\n"); $$ = $1; }
-                  | identificador LBRACKET exp RBRACKET { printf("[var->identificador LBRACKET exp RBRACKET]\n");
+var               : identificador { fprintf(bison_output, "[var->identificador]\n"); $$ = $1; }
+                  | identificador LBRACKET exp RBRACKET { fprintf(bison_output, "[var->identificador LBRACKET exp RBRACKET]\n");
                     $$ = newExpNode(VectorIdK);
                     $$->attr.name = $1->attr.name;
                     $$->child[0] = $3;
                   }
                   ;
 
-exp               : var ASSIGN exp { printf("[exp->var ASSIGN exp]\n");
+exp               : var ASSIGN exp { fprintf(bison_output, "[exp->var ASSIGN exp]\n");
                     $$ = newStmtNode(AssignK);
                     $$->type = $3->type;
                     $$->attr.name = "=";
                     $$->child[0] = $1;
                     $$->child[1] = $3;
                   }
-                  | simple_exp { printf("[exp->simple_exp]\n"); $$ = $1; }
+                  | simple_exp { fprintf(bison_output, "[exp->simple_exp]\n"); $$ = $1; }
                   ;
 
-simple_exp        : soma_exp relational soma_exp { printf("[simple_exp->soma_exp relational soma_exp]\n");
+simple_exp        : soma_exp relational soma_exp { fprintf(bison_output, "[simple_exp->soma_exp relational soma_exp]\n");
                     $$ = $2;
                     $$->child[0] = $1;
                     $$->child[1] = $3;
                   }
-                  | soma_exp { printf("[simple_exp->soma_exp]\n"); $$ = $1; }
+                  | soma_exp { fprintf(bison_output, "[simple_exp->soma_exp]\n"); $$ = $1; }
                   ;
 
-relational        : LT {printf("[LT]\n"); $$ = newExpNode(OpK); $$->attr.op = LT;}
-                  | LET {printf("[LET]\n"); $$ = newExpNode(OpK); $$->attr.op = LET;}
-                  | GT {printf("[GT]\n"); $$ = newExpNode(OpK); $$->attr.op = GT;}
-                  | GET {printf("[GET]\n"); $$ = newExpNode(OpK); $$->attr.op = GET;}
-                  | EQ {printf("[EQ]\n");$$ = newExpNode(OpK); $$->attr.op = EQ;}
-                  | DIFF {printf("[DIFF]\n"); $$ = newExpNode(OpK); $$->attr.op = DIFF;}
+relational        : LT {fprintf(bison_output, "[LT]\n"); $$ = newExpNode(OpK); $$->attr.op = LT;}
+                  | LET {fprintf(bison_output, "[LET]\n"); $$ = newExpNode(OpK); $$->attr.op = LET;}
+                  | GT {fprintf(bison_output, "[GT]\n"); $$ = newExpNode(OpK); $$->attr.op = GT;}
+                  | GET {fprintf(bison_output, "[GET]\n"); $$ = newExpNode(OpK); $$->attr.op = GET;}
+                  | EQ {fprintf(bison_output, "[EQ]\n");$$ = newExpNode(OpK); $$->attr.op = EQ;}
+                  | DIFF {fprintf(bison_output, "[DIFF]\n"); $$ = newExpNode(OpK); $$->attr.op = DIFF;}
                   ;
 
-soma_exp          : soma_exp soma termo { printf("[soma_exp->soma_exp soma termo]\n");
+soma_exp          : soma_exp soma termo { fprintf(bison_output, "[soma_exp->soma_exp soma termo]\n");
                     $$ = $2;
                     $$->child[0] = $1;
                     $$->child[1] = $3;
                   }
-                  | termo { printf("[soma_exp->termo]\n"); $$=$1; }
+                  | termo { fprintf(bison_output, "[soma_exp->termo]\n"); $$=$1; }
 
-soma              : PLUS { printf("[+]\n");
+soma              : PLUS { fprintf(bison_output, "[+]\n");
                     $$ = newExpNode(OpK);
                     $$->attr.op = PLUS;
                   }
-                  | MINUS { printf("[-]\n");
+                  | MINUS { fprintf(bison_output, "[-]\n");
                     $$ = newExpNode(OpK);
                     $$->attr.op = MINUS;
                   }
                   ;
 
-termo             : termo multi fator { printf("[termo->termo multi fator]\n");
+termo             : termo multi fator { fprintf(bison_output, "[termo->termo multi fator]\n");
                     $$ = $2;
                     $$->child[0] = $1;
                     $$->child[1] = $3;
@@ -290,40 +291,40 @@ termo             : termo multi fator { printf("[termo->termo multi fator]\n");
                   | fator { $$ = $1; }
                   ;
 
-multi             : TIMES { printf("[multi->TIMES]\n");
+multi             : TIMES { fprintf(bison_output, "[multi->TIMES]\n");
                     $$ = newExpNode(OpK);
                     $$->attr.op = TIMES;
                   }
-                  | OVER { printf("[multi->OVER]\n");
+                  | OVER { fprintf(bison_output, "[multi->OVER]\n");
                     $$ = newExpNode(OpK);
                     $$->attr.op = OVER;
                   }
                   ;
 
-fator             : LPAREN exp RPAREN { printf("[fator->LPAREN exp RPAREN]\n");
+fator             : LPAREN exp RPAREN { fprintf(bison_output, "[fator->LPAREN exp RPAREN]\n");
                     $$ = $2;
                     $$->type = $2->type;
                   }
-                  | var { printf("[fator->var]\n"); $$ = $1; }
-                  | activation { printf("[fator->activation]\n"); $$ = $1; }
-                  | numero { printf("[fator->numero]\n"); $$ = $1; }
-                  | ERROR { printf("[fator->ERROR]\n"); $$ = NULL; yyerrok;}
+                  | var { fprintf(bison_output, "[fator->var]\n"); $$ = $1; }
+                  | activation { fprintf(bison_output, "[fator->activation]\n"); $$ = $1; }
+                  | numero { fprintf(bison_output, "[fator->numero]\n"); $$ = $1; }
+                  | ERROR { fprintf(bison_output, "[fator->ERROR]\n"); $$ = NULL; yyerrok;}
                   ;
 
-activation        : identificador LPAREN arg_list RPAREN { printf("[activation->identificador LPAREN arg_list RPAREN]\n");
+activation        : identificador LPAREN arg_list RPAREN { fprintf(bison_output, "[activation->identificador LPAREN arg_list RPAREN]\n");
                     $$ = newStmtNode(CallK);
                     $$->type = $1->type;
                     $$->attr.name = $1->attr.name;
                     $$->child[0] = $3;
                   }
-                  | identificador LPAREN RPAREN { printf("[activation->identificador LPAREN RPAREN]\n");
+                  | identificador LPAREN RPAREN { fprintf(bison_output, "[activation->identificador LPAREN RPAREN]\n");
                     $$ = newStmtNode(CallK);
                     $$->type = $1->type;
                     $$->attr.name = $1->attr.name;
                   }
                   ;
 
-arg_list          : arg_list COMMA exp { printf("[arg_list->arg_list COMMA exp]\n");
+arg_list          : arg_list COMMA exp { fprintf(bison_output, "[arg_list->arg_list COMMA exp]\n");
                     YYSTYPE t = $1;
 
                     if (t != NULL) {
@@ -338,13 +339,13 @@ arg_list          : arg_list COMMA exp { printf("[arg_list->arg_list COMMA exp]\
                   | exp { $$ = $1; }
                   ;
 
-numero            : NUM {printf("[NUM]\n");
+numero            : NUM {fprintf(bison_output, "[NUM]\n");
                     $$ = newExpNode(ConstK);
                     $$->type = Integer;
                     $$->attr.val = atoi(yytext);
                   }
 
-identificador     : ID {printf("[ID] = %s\n", yytext);$$ = newExpNode(IdK);
+identificador     : ID {fprintf(bison_output, "[ID] = %s\n", yytext);$$ = newExpNode(IdK);
                         $$->attr.name = copyString(yytext);}
                   ;
 
@@ -367,27 +368,8 @@ int yyerror(char * message)
  * compatible with ealier versions of the TINY scanner
  */
 
-/*static int yylex(void)
-{ Token tok = getToken();
-
-  return tok.type;
-}*/
-
-/*static int yylex(void)
-{ return getTokenByType(); }*/
-
 TreeNode * parse(void)
 { 
-  /*if (!STOP_PARSING) {
-    if (yyparse() == 0) { // YYACCEPT
-      return savedTree;
-    } else {
-      savedTree = NULL;
-      //yyerrok;
-      //yyerrok();
-      //parse();
-    }
-  }*/
 
   yyparse();
   return savedTree;

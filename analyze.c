@@ -20,6 +20,9 @@ int returnVoid;
 int add_in_out = 0;
 BucketList bl;
 BucketList funct_arg;
+
+regex_t _temporary_regex;
+
 static void typeError(TreeNode * t, char * message);
 
 
@@ -86,21 +89,24 @@ static void insertNode( TreeNode * t )
         switch (t->kind.stmt)
         {
         case FunctionK:
+
             if(strcmp(t->attr.name,"main")==0)
                 function_main = 1;
             bl = st_lookup(t->attr.name,"global");
+
             if (bl == NULL)
             {
                 t->scope=scope;
                 /* not yet in table, so treat as new definition */
-                    returnVoid = datatype(t);
-                    if(returnVoid==0){
-                        st_insert(t->attr.name, FunctionSt, datatype(t), t->line_number, location++, "global",0, 0);
-                     }
-                     else{
-                        st_insert(t->attr.name, FunctionSt, datatype(t), t->line_number, location, "global",0, 0);
-                        location+=2;
-                     }
+
+                returnVoid = datatype(t);
+                if(returnVoid==0){
+                    st_insert(t->attr.name, FunctionSt, datatype(t), t->line_number, location++, "global",0, 0);
+                    }
+                else{
+                    st_insert(t->attr.name, FunctionSt, datatype(t), t->line_number, location, "global",0, 0);
+                    location+=2;
+                }
                 scope=t->attr.name;
                 t->scope=scope;
             }
@@ -110,6 +116,12 @@ static void insertNode( TreeNode * t )
             break;
 
         case ParamK:
+
+            if (regexec(&_temporary_regex, t->attr.name, 0, (regmatch_t *)NULL, 0) == 0) {
+                typeError(t,"Variable name already reserved !");
+                break;
+            }
+
             bl = st_lookup(t->attr.name,scope);
             funct_arg = st_lookup(scope, scope);
             typeVoid = datatype(t);
@@ -138,7 +150,21 @@ static void insertNode( TreeNode * t )
 
         case CallK:
             t->scope=scope;
+
             bl = st_lookup(t->attr.name,scope);
+
+            int args = 0;
+            TreeNode *c = t->child[0];
+            while(c != NULL) {
+                args++;
+                c = c->sibling;
+            }
+
+            if (bl->number_args != args) {
+                typeError(t,"This function require a different number of params");
+                break;
+            }
+
             if (bl == NULL)
                 /* not in table, so message error must to be  */
                 typeError(t,"Function must be declared first");
@@ -160,6 +186,7 @@ static void insertNode( TreeNode * t )
         {
         case IdK:
             t->scope=scope;
+
             bl = st_lookup(t->attr.name,scope);
             if (bl == NULL)
                 /* not yet in table, so message error must be print*/
@@ -176,6 +203,12 @@ static void insertNode( TreeNode * t )
 
         case VariableK:
             t->scope=scope;
+
+            if (regexec(&_temporary_regex, t->attr.name, 0, (regmatch_t *)NULL, 0) == 0) {
+                typeError(t,"Variable name already reserved for temporaries!");
+                break;
+            }
+
             bl = st_lookup(t->attr.name,scope);
             if (bl == NULL)
                 /* not yet in table, so treat as new definition */
@@ -198,6 +231,12 @@ static void insertNode( TreeNode * t )
 
         case VectorK:
             t->scope=scope;
+
+            if (regexec(&_temporary_regex, t->attr.name, 0, (regmatch_t *)NULL, 0) == 0) {
+                typeError(t,"Variable name already reserved !");
+                break;
+            }
+
             if (st_lookup(t->attr.name,scope) == NULL){
                 /* not yet in table, so treat as new definition */
                 st_insert(t->attr.name, VectorDeclaredSt, datatype(t), t->line_number, location, scope, 0, 0);
@@ -234,6 +273,11 @@ static void insertNode( TreeNode * t )
  */
 void buildSymtab(TreeNode * syntaxTree)
 {
+    if (regcomp(&_temporary_regex, "t[0-9]", REG_EXTENDED|REG_NOSUB) != 0) {
+        fprintf(stderr, "Unable to compile regex [t0-9] !");
+        exit(1);
+    }
+
     traverse(syntaxTree,insertNode,nullProc);
     if (TraceAnalyze)
     {
@@ -246,7 +290,7 @@ static void typeError(TreeNode * t, char * message)
 {
     if(t!=NULL)
     {
-        fprintf(listing,"Type error at line %d: %s\n",t->line_number,message);
+        fprintf(listing,">>> Type error at line %d: %s\n",t->line_number,message);
         Error = TRUE;
     }
 }

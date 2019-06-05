@@ -24,7 +24,7 @@ typedef struct tempReg
     int address;
 } TypeRegTemp;
 
-void codeGen(TreeNode * syntaxTree, char * codefile);
+void codeGen(TreeNode * syntaxTree, FILE* output);
 char *new(int num);
 char * get_new_temp(char * regtemp, int address);
 void tempOp(Lno *node_IR);
