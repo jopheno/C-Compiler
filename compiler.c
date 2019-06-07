@@ -27,7 +27,7 @@ int lines_number = 0;
 extern Tlist LIST;
 
 
-int runCompiler(char* source_file, bool debug_mode, char* output_file) {
+int runCompiler(char* source_file, bool debug_mode, bool ja_mode, char* output_file) {
 
 	if (debug_mode) {
 		TraceScan = TRUE;
@@ -119,6 +119,11 @@ int runCompiler(char* source_file, bool debug_mode, char* output_file) {
 	{ 
 		printf("Unable to open %s\n",ja_file_name);
 		exit(1);
+	}
+
+	if (ja_mode) {
+		fclose(ja_file);
+		ja_file = stdout;
 	}
 
 	init_assembly(ja_file);

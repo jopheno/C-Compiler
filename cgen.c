@@ -469,9 +469,27 @@ static void genStmt( TreeNode * tree)
 
             else
             {
+                int n_args = 0;
+                TreeNode* p = p1;
+                while(p!=NULL) {
+                    n_args++;
+                    p = p->sibling;
+                }
 
-                while(p1!=NULL)
+                TreeNode** brothers = (TreeNode**) malloc(n_args*sizeof(TreeNode*));
+
+                n_args = 0;
+                p = p1;
+
+                while(p!=NULL) {
+                    brothers[n_args++] = p;
+                    p = p->sibling;
+                }
+
+                //while(p1!=NULL)
+                for(int i = n_args-1; i>=0; i--)
                 {
+                    p1 = brothers[i];
                     if (p1->nodekind==ExpK)
                     {
                         if(p1->kind.exp==ConstK)
@@ -527,7 +545,7 @@ static void genStmt( TreeNode * tree)
                             {
                                 cGen(p1);
                                 insert_Stack(&STACK,LIST.last);
-                                aux1.addr.string = "arg_Address";
+                                aux1.addr.string = "arg_address";
                                 aux1.type=String;
                                 aux2.addr.string = "_";
                                 aux2.type=String;
@@ -552,7 +570,7 @@ static void genStmt( TreeNode * tree)
                             aux4=saved_instruction->result;
                             L=insert_Node_List(&LIST, aux1, aux2, aux3, aux4);
                         }
-                        p1=p1->sibling;
+                        //p1=p1->sibling;
                     }
 
                     else if(p1->nodekind==StmtK)
@@ -571,9 +589,11 @@ static void genStmt( TreeNode * tree)
                             aux4=saved_instruction->result;
                             L=insert_Node_List(&LIST, aux1, aux2, aux3, aux4);
                         }
-                        p1=p1->sibling;
+                        //p1=p1->sibling;
                     }
                 }
+
+                free(brothers);
 
                 bucketl = st_lookup(tree->attr.name,tree->scope);
                 if( bucketl->datatype != 0)
@@ -782,6 +802,19 @@ static void genExp( TreeNode * tree)
                 opglobal=LIST.last->result;
                 insert_StackOp (&STACKOP, opglobal);
             }
+
+            // There is some assignments that occurs inside IF structures that
+            // do not add assign_id_a and compare pointers to values, in order
+            // to solve this problem, this line was added !
+            aux1.addr.string = "assign_id_a";
+            aux1.type=String;
+            aux2.addr.string = aux_temp;
+            aux2.type = String;
+            aux3.addr.string = "_";
+            aux3.type=String;
+            aux4.addr.string = aux_temp;
+            aux4.type = String;
+            L=insert_Node_List(&LIST, aux1, aux2, aux3, aux4);
     }
         else if(p1->kind.stmt==CallK)
         {
@@ -1212,7 +1245,7 @@ void generate_limited_temporaries(Tlist *list)
                         a1->result.address = aux.address;
                 }
             }
-            else if (strcmp(a1->op.addr.string,"arg_Address")==0)
+            else if (strcmp(a1->op.addr.string,"arg_address")==0)
             {
                 aux = set_temp_used(a1->result.addr.string);
                 a1->result.addr.string = aux.newReg;
@@ -1340,7 +1373,7 @@ void codeGen(TreeNode * syntaxTree, FILE* output)
         L=insert_Node_List(&LIST, aux1, aux2, aux3, aux4);
 
     /*************************************************************/
-        aux1.addr.string = "halt";
+        /*aux1.addr.string = "halt";
         aux1.type=String;
         aux2.addr.string="_";
         aux2.type=String;
@@ -1348,7 +1381,7 @@ void codeGen(TreeNode * syntaxTree, FILE* output)
         aux3.type=String;
         aux4.addr.string = "_";
         aux4.type = String;
-        L=insert_Node_List(&LIST, aux1, aux2, aux3, aux4);
+        L=insert_Node_List(&LIST, aux1, aux2, aux3, aux4);*/
     /*************************************************************/
     /* Incialize states for allocation register machine code generation */
     for(i=1; i<11; i++)

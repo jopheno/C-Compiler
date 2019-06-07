@@ -24,6 +24,8 @@ typedef enum joph_arg_type {
 typedef struct joph_reg {
     char* name;
     j_reg_code_t code;
+    bool ref;
+    uint32_t memloc;
 } j_reg_t;
 
 typedef struct joph_arg {

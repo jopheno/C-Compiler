@@ -27,6 +27,7 @@ int curr;
 // For debugging purposes
 char* curr_instr;
 
+void add_instr();
 void print_instr();
 void import_IO();
 
@@ -61,6 +62,8 @@ void init_inst() {
 
     print_instr();
 
+    add_instr(PRG, "HALT", NULL, NULL, NULL, NULL);
+
     import_IO();
 
 }
@@ -75,6 +78,8 @@ void init_reg(j_reg_manager_t* regg, char* reg_name, j_reg_code_t code, char* va
     strcpy(regg->name, var_name);
     strcpy(regg->scope, var_scope);
     regg->reg.code = code;
+    regg->reg.memloc = -1;
+    regg->reg.ref = false;
     regg->freed = freed;
     regg->locked = false;
 }
@@ -82,10 +87,10 @@ void init_reg(j_reg_manager_t* regg, char* reg_name, j_reg_code_t code, char* va
 void init_regm() {
     regm = (j_reg_manager_t*) malloc(sizeof(j_reg_manager_t)*REGISTERS_AMOUNT);
 
-    init_reg(&regm[0], "eax", 10000000, "none", "global", true);
-    init_reg(&regm[1], "ebx", 10100000, "none", "global", true);
-    init_reg(&regm[2], "ecx", 11000000, "none", "global", true);
-    init_reg(&regm[3], "edx", 11100000, "none", "global", true);
+    init_reg(&regm[0], "eax", 10000000, "t0", "global", true);
+    init_reg(&regm[1], "ebx", 10100000, "t0", "global", true);
+    init_reg(&regm[2], "ecx", 11000000, "t0", "global", true);
+    init_reg(&regm[3], "edx", 11100000, "t0", "global", true);
 
     false_reg = (j_reg_t*) malloc(sizeof(j_reg_t));
     false_reg->name = "false";
@@ -156,6 +161,10 @@ j_reg_manager_t* regm_alloc () {
     if (reg->freed && !reg->locked) {
         reg->freed = false;
         reg->locked = true;
+        strcpy(reg->name, "t0");
+        strcpy(reg->scope, "global");
+        reg->reg.memloc = -1;
+
         return reg;
     }
 
@@ -167,7 +176,7 @@ j_reg_manager_t* regm_alloc () {
         if (bl != NULL) {
             j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
             first->type = IMMEDIATE;
-            first->data.immediate = bl->memloc;
+            first->data.immediate = reg->reg.memloc;
 
             j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
             third->type = REG;
@@ -175,18 +184,27 @@ j_reg_manager_t* regm_alloc () {
 
             add_instr(DMA, "STOREi", third, NULL, first, NULL);
 
+            strcpy(reg->name, "t0");
+            strcpy(reg->scope, "global");
+            reg->reg.memloc = -1;
+
             reg->freed = false;
             
 
             return reg;
-
         } else {
-            printf(">>> [0x02] An error has been found !\n");
-            printf(">>>> regm_alloc throws the exception.");
-            printf(">>>>> curr_instr = %s\n", curr_instr);
-            exit(-1);
-            return NULL;
+            // It was already used for const storage.
+
+            reg->freed = false;
+            return reg;
         }
+
+    } else {
+        printf(">>> [0x02] An error has been found !\n");
+        printf(">>>> regm_alloc throws the exception.");
+        printf(">>>>> curr_instr = %s\n", curr_instr);
+        exit(-1);
+        return NULL;
     }
 }
 
@@ -215,6 +233,12 @@ j_reg_manager_t* regm_load ( char * name, char * scope, j_var_list* list) {
             
                 strcpy(reg->name, name);
                 strcpy(reg->scope, scope);
+                if (bl->passBYreference == 1)
+                    reg->reg.ref = true;
+                else
+                    reg->reg.ref = false;
+                
+                reg->reg.memloc = bl->memloc;
                 reg->freed = false;
                 
 
@@ -229,15 +253,24 @@ j_reg_manager_t* regm_load ( char * name, char * scope, j_var_list* list) {
             }
         }
     }
-    printf(">> Not enough registers, I will try to free one of them.\n");
+    printf(">> [%d] Not enough registers, I will try to free one of them.\n", curr);
 
     for (int i = 0; i<REGISTERS_AMOUNT; i++) {
         j_reg_manager_t* reg = &regm[i];
-        if ( (list->n1 != NULL && list->s1 != NULL && strcmp(reg->name, list->n1) == 0 && strcmp(reg->scope, list->s1) == 0) ||
-            (list->n2 != NULL && list->s2 != NULL && strcmp(reg->name, list->n2) == 0 && strcmp(reg->scope, list->s2) == 0) ||
-            (list->n3 != NULL && list->s3 != NULL && strcmp(reg->name, list->n3) == 0 && strcmp(reg->scope, list->s3) == 0) )
+        /*if (list->n1 != NULL && list->s1 != NULL)
+            printf("[%d] >>> list->n1 = %s && reg->name = %s && cmp = %d && cmp = %d\n", i, list->n1, reg->name, strcmp(reg->name, list->n1), strcmp(reg->scope, list->s1));
+
+        if (list->n2 != NULL && list->s2 != NULL)
+            printf("[%d] >>> list->n2 = %s && reg->name = %s && cmp = %d && cmp = %d\n", i, list->n2, reg->name, strcmp(reg->name, list->n2), strcmp(reg->scope, list->s2));
+
+        if (list->n3 != NULL && list->s3 != NULL)
+            printf("[%d] >>> list->n3 = %s && reg->name = %s && cmp = %d && cmp = %d\n", i, list->n3, reg->name, strcmp(reg->name, list->n3), strcmp(reg->scope, list->s3));*/
+
+        if ( (list->n1 == NULL || (list->n1 != NULL && list->s1 != NULL && (strcmp(reg->name, list->n1) != 0 || strcmp(reg->scope, list->s1) != 0))) &&
+            (list->n2 == NULL || (list->n2 != NULL && list->s2 != NULL && (strcmp(reg->name, list->n2) != 0 || strcmp(reg->scope, list->s2) != 0))) &&
+            (list->n3 == NULL || (list->n3 != NULL && list->s3 != NULL && (strcmp(reg->name, list->n3) != 0 || strcmp(reg->scope, list->s3) != 0))) )
         {
-            BucketList bl = st_lookup ( name, scope);
+            BucketList bl = st_lookup ( reg->name, reg->scope);
 
             if (bl != NULL) {
                 j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
@@ -249,12 +282,18 @@ j_reg_manager_t* regm_load ( char * name, char * scope, j_var_list* list) {
                 third->data.label = reg->reg.name;
                 add_instr(DMA, "STOREi", third, NULL, first, NULL);
 
-                strcpy(reg->name, name);
+                /*strcpy(reg->name, name);
                 strcpy(reg->scope, scope);
-                reg->freed = false;
-                
+                if (bl->passBYreference == 1)
+                    reg->reg.ref = true;
+                else
+                    reg->reg.ref = false;*/
 
-                return reg;
+                reg->freed = true;
+
+                // Once I have an available register, I can now load and
+                // and return the requested variable over this freed register.
+                return regm_load ( name, scope, list);
 
             } else {
                 printf(">>> [0x02] An error has been found !\n");
@@ -265,6 +304,12 @@ j_reg_manager_t* regm_load ( char * name, char * scope, j_var_list* list) {
             }
         }
     }
+
+    // Was unable to free a register to use !
+    printf(">>> [0x05] An error has been found !\n");
+    printf(">>>> regm_load throws the exception.");
+    printf(">>>>> curr_instr = %s\n", curr_instr);
+    exit(-1);
 
     return NULL;
 }
@@ -558,6 +603,25 @@ void decode_instr(char* IC_type, Lno* node) {
 
         add_instr(DMA, "POP", third, NULL, NULL, NULL);
         
+    } else if (strcmp(IC_type, "param_array") == 0) {
+
+        // param is the way you read function parameters, to do this, we usually uses POP on joph_arch.
+
+        char* third_name = node->result.addr.variable->name;
+        char* third_scope = node->result.addr.variable->scope;
+
+        j_var_list* l = create_var_list(third_name, third_scope, NULL, NULL, NULL, NULL);
+
+        j_reg_t *first_reg = regm_load(third_name, third_scope, l);
+
+        destroy_var_list(l);
+
+        j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
+        third->type = REG;
+        third->data.reg = first_reg;
+
+        add_instr(DMA, "POP", third, NULL, NULL, NULL);
+        
     } else if (strcmp(IC_type, "IF_FALSE") == 0) {
         regm_backup();
 
@@ -626,6 +690,37 @@ void decode_instr(char* IC_type, Lno* node) {
         regm_free();
     } else if (strcmp(IC_type, "arg") == 0) {
 
+        char* first_name = NULL;
+        char* first_scope = NULL;
+        j_reg_t *first_reg = NULL;
+    
+        char* second_name = NULL;
+        char* second_scope = NULL;
+        j_reg_t *second_reg = NULL;
+
+        char* third_name = NULL;
+        char* third_scope = NULL;
+        j_reg_t *third_reg = NULL;
+
+        handle_var(&node->result, &third_name, &third_scope, &third_reg);
+        
+        j_var_list* l = create_var_list(first_name, first_scope, second_name, second_scope, third_name, third_scope);
+
+        if (third_name != NULL && third_scope != NULL)
+            third_reg = regm_load(third_name, third_scope, l);
+
+        destroy_var_list(l);
+
+        j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
+        third->type = REG;
+        third->data.reg = third_reg;
+
+        add_instr(DMA, "PUSH", third, NULL, NULL, NULL);
+
+        regm_unlock();
+
+    } else if (strcmp(IC_type, "arg_address") == 0) {
+
         if (node->result.type == Bucket && node->result.addr.variable != NULL) {
             char* first_name = node->result.addr.variable->name;
             char* first_scope = node->result.addr.variable->scope;
@@ -639,6 +734,7 @@ void decode_instr(char* IC_type, Lno* node) {
             third->type = REG;
             third->data.reg = first_reg;
 
+            add_instr(DMA, "LOAD", third, NULL, third, NULL);
             add_instr(DMA, "PUSH", third, NULL, NULL, NULL);
             
         }
@@ -767,12 +863,225 @@ void decode_instr(char* IC_type, Lno* node) {
         add_instr(ALU, "ADD", third, third, first, NULL);
 
         regm_unlock();
+    } else if (strcmp(IC_type, "assign_a_a") == 0) {
+
+        // Assign identifier operations are used to assign consts or register-data values to variables.
+
+        char* first_name = NULL;
+        char* first_scope = NULL;
+        j_reg_t *first_reg = NULL;
+    
+        char* second_name = NULL;
+        char* second_scope = NULL;
+        j_reg_t *second_reg = NULL;
+
+        char* third_name = NULL;
+        char* third_scope = NULL;
+        j_reg_t *third_reg = NULL;
+
+        handle_var(&node->arg1, &first_name, &first_scope, &first_reg);
+        handle_var(&node->result, &third_name, &third_scope, &third_reg);
+
+        j_var_list* l = create_var_list(first_name, first_scope, second_name, second_scope, third_name, third_scope);
+
+        if (first_name != NULL && first_scope != NULL)
+            first_reg = regm_load(first_name, first_scope, l);
+
+        if (third_name != NULL && third_scope != NULL)
+            third_reg = regm_load(third_name, third_scope, l);
+
+        destroy_var_list(l);
+
+        j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
+        first->type = REG;
+        first->data.reg = first_reg;
+
+        j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
+        third->type = REG;
+        third->data.reg = third_reg;
+
+        // Backup first reg that contains mem_address
+        add_instr(DMA, "PUSH", first, NULL, NULL, NULL);
+
+        // Get mem_address value and store in first
+        add_instr(DMA, "LOAD", first, NULL, first, NULL);
+
+        // Store into third reg mem_address the value available
+        // in the first reg.
+        add_instr(DMA, "STORE", first, NULL, third, NULL);
+
+        // Retrieve the backup from the stack.
+        add_instr(DMA, "POP", first, NULL, NULL, NULL);
+
+        regm_unlock();
+    } else if (strcmp(IC_type, "assign_a_id") == 0 ||
+                strcmp(IC_type, "assign_a_f") == 0) {
+
+        // Assign identifier operations are used to assign consts or register-data values to variables.
+
+        char* first_name = NULL;
+        char* first_scope = NULL;
+        j_reg_t *first_reg = NULL;
+    
+        char* second_name = NULL;
+        char* second_scope = NULL;
+        j_reg_t *second_reg = NULL;
+
+        char* third_name = NULL;
+        char* third_scope = NULL;
+        j_reg_t *third_reg = NULL;
+
+        handle_var(&node->arg1, &first_name, &first_scope, &first_reg);
+        handle_var(&node->result, &third_name, &third_scope, &third_reg);
+
+        j_var_list* l = create_var_list(first_name, first_scope, second_name, second_scope, third_name, third_scope);
+
+        if (first_name != NULL && first_scope != NULL)
+            first_reg = regm_load(first_name, first_scope, l);
+
+        if (third_name != NULL && third_scope != NULL)
+            third_reg = regm_load(third_name, third_scope, l);
+
+        destroy_var_list(l);
+
+        j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
+        first->type = REG;
+        first->data.reg = first_reg;
+
+        j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
+        third->type = REG;
+        third->data.reg = third_reg;
+
+        // Store into third reg mem_address the value available
+        // in the first reg.
+        add_instr(DMA, "STORE", first, NULL, third, NULL);
+
+        regm_unlock();
+    } else if (strcmp(IC_type, "assign_id_a") == 0) {
+
+        // Assign identifier operations are used to assign consts or register-data values to variables.
+
+        char* first_name = NULL;
+        char* first_scope = NULL;
+        j_reg_t *first_reg = NULL;
+    
+        char* second_name = NULL;
+        char* second_scope = NULL;
+        j_reg_t *second_reg = NULL;
+
+        char* third_name = NULL;
+        char* third_scope = NULL;
+        j_reg_t *third_reg = NULL;
+
+        handle_var(&node->arg1, &first_name, &first_scope, &first_reg);
+        handle_var(&node->result, &third_name, &third_scope, &third_reg);
+
+        j_var_list* l = create_var_list(first_name, first_scope, second_name, second_scope, third_name, third_scope);
+
+        if (first_name != NULL && first_scope != NULL)
+            first_reg = regm_load(first_name, first_scope, l);
+
+        if (third_name != NULL && third_scope != NULL)
+            third_reg = regm_load(third_name, third_scope, l);
+
+        destroy_var_list(l);
+
+        j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
+        first->type = REG;
+        first->data.reg = first_reg;
+
+        j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
+        third->type = REG;
+        third->data.reg = third_reg;
+
+        // Store into third reg mem_address the value available
+        // in the first reg.
+        add_instr(DMA, "LOAD", third, NULL, first, NULL);
+
+        regm_unlock();
+    } else if (strcmp(IC_type, "vector_var") == 0) {
+
+        // Assign a vector variable is used to assign to a temporary variable the value
+        // found at a requested position from a vector.
+
+        char* first_name = NULL;
+        char* first_scope = NULL;
+        j_reg_t *first_reg = NULL;
+    
+        char* second_name = NULL;
+        char* second_scope = NULL;
+        j_reg_t *second_reg = NULL;
+
+        char* third_name = NULL;
+        char* third_scope = NULL;
+        j_reg_t *third_reg = NULL;
+
+        handle_var(&node->arg1, &first_name, &first_scope, &first_reg);
+        handle_var(&node->arg2, &second_name, &second_scope, &second_reg);
+        handle_var(&node->result, &third_name, &third_scope, &third_reg);
+
+        j_var_list* l = create_var_list(first_name, first_scope, second_name, second_scope, third_name, third_scope);
+
+        if (first_name != NULL && first_scope != NULL)
+            first_reg = regm_load(first_name, first_scope, l);
+
+        if (second_name != NULL && second_scope != NULL)
+            second_reg = regm_load(second_name, second_scope, l);
+
+        if (third_name != NULL && third_scope != NULL)
+            third_reg = regm_load(third_name, third_scope, l);
+
+        destroy_var_list(l);
+
+        j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
+        first->type = REG;
+        first->data.reg = first_reg;
+
+        j_arg_t* second = (j_arg_t*) malloc(sizeof(j_arg_t));
+        second->type = REG;
+        second->data.reg = second_reg;
+
+        j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
+        third->type = REG;
+        third->data.reg = third_reg;
+
+        if (first_reg->ref) {
+            // If first_reg ref value is true, it means that this was passed by
+            // reference to a function, so the pointer is found on it's value.
+
+            // We must add to the pointer value (the read value from register) and
+            // then search on the new generated pointer value and load it from memory.
+
+            add_instr(ALU, "ADD", third, first, second, NULL);
+            //add_instr(DMA, "LOAD", third, NULL, third, NULL);
+
+        } else {
+            // If first_reg ref value is false, it means that this was not passed by
+            // reference to a function, so the pointer is it's own memory location.
+
+            j_arg_t* immediate = (j_arg_t*) malloc(sizeof(j_arg_t));
+            immediate->type = IMMEDIATE;
+            immediate->data.immediate = first_reg->memloc;
+
+            add_instr(ALU, "XOR", third, third, third, NULL);
+
+            add_instr(ALUi, "ADD", third, NULL, immediate, NULL);
+            add_instr(ALU, "ADD", third, third, second, NULL);
+
+            //add_instr(DMA, "LOAD", third, NULL, third, NULL);
+        }
+
+        regm_unlock();
     } else if (strcmp(IC_type, "halt") == 0) {
         regm_backup();
 
         regm_free();
 
         add_instr(PRG, "HALT", NULL, NULL, NULL, NULL);
+    } else {
+        printf(">>> [0x06] An error has been found !\n");
+        printf(">>>> decode_instr throws the exception.\n");
+        printf(">>>>> curr_instr = %s\n", curr_instr);
     }
 }
 
@@ -889,7 +1198,6 @@ void generate_assembly(Tlist* list) {
 
                 if (strcmp(curr_instr, "assign_id_const") == 0 ||
                     strcmp(curr_instr, "assign_id_id") == 0 ||
-                    strcmp(curr_instr, "assign_id_a") == 0 ||
                     strcmp(curr_instr, "assign_id_exp") == 0 ||
                     strcmp(curr_instr, "assign_id_f") == 0)
                     curr_instr = "assign_id";

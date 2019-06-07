@@ -14,7 +14,7 @@ int main(int argc, const char * argv[]) {
 	// insert code here...
 
 	if (argc < 2) {
-		printf("> usage: %s <filename> [FLAGs: --DEBUG -o <output_file>]\n", argv[0]);
+		printf("> usage: %s <filename> [FLAGs: --DEBUG --JA -o <output_file>]\n", argv[0]);
 		return -1;
 	}
 
@@ -22,11 +22,15 @@ int main(int argc, const char * argv[]) {
 	char* output_file_name = NULL;
 
 	bool debug_mode = false;
+	bool ja_mode = false;
 
 	if (argc > 2) {
 		for (int i = 2; i<argc; i++) {
 			if (strcmp(argv[i], "--DEBUG") == 0)
 				debug_mode = true;
+
+			if (strcmp(argv[i], "--JA") == 0)
+				ja_mode = true;
 
 			if (strcmp(argv[i], "-o") == 0) {
 				if (argc > i+1) {
@@ -40,7 +44,7 @@ int main(int argc, const char * argv[]) {
 		}
 	}
 
-	runCompiler(file_name, debug_mode, output_file_name);
+	runCompiler(file_name, debug_mode, ja_mode, output_file_name);
 
 	return 0;
 }
