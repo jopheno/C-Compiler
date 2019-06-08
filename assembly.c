@@ -56,7 +56,7 @@ void init_inst() {
     header_inst->second = NULL;
     header_inst->third = NULL;
 
-    header_inst->label = NULL;
+    header_inst->label = "START";
 
     last_inst = header_inst;
 
@@ -1276,12 +1276,12 @@ void import_IO() {
 
     add_instr(DMA, "GIA", eax_arg, NULL, NULL, NULL);
 
-    // Now we must verify if there is at least one input waiting to be handled. However to do that, we must
-    // have a register with value equals to 1 in order to compare.
+    // Now we must verify if it exists at least one input value, in order to do that we will,
+    // verify if EAX register equals zero, if so, we will go back to the start_function.
 
     add_instr(ALU, "XOR", ebx_arg, ebx_arg, ebx_arg, NULL);
 
-    add_instr(ALU, "SLT", ecx_arg, ebx_arg, eax_arg, NULL);
+    add_instr(ALU, "SET", ecx_arg, ebx_arg, eax_arg, NULL);
 
     // Now we must create a conditional jump using ECX register value that contains the boolean info from the
     // logical operation <.
