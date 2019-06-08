@@ -11,3 +11,4 @@ LUA/example.ja
 LUA/output.mif
 exec
 bison.output
+bison.dot

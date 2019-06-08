@@ -36,8 +36,8 @@
 #define MAXRESERVED 8
 
 #ifndef YYTOKENTYPE
-
-typedef enum {
+# define YYTOKENTYPE
+  enum yytokentype {
     /* book-keeping tokens */
     ENDFILE,ERROR,
     /* reserved words */
@@ -48,7 +48,7 @@ typedef enum {
     ID,NUM,
     /* special symbols */
     ASSIGN,EQ,DIFF,LT,LET,GT,GET,PLUS,MINUS,TIMES,OVER,LPAREN,RPAREN,LBRACKET,RBRACKET,LCBRACE,RCBRACE,SEMI,COMMA
-} TokenType;
+  };
 
 #endif
 

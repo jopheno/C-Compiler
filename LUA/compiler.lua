@@ -148,7 +148,7 @@ local regs = {
 	},
 
 	["esp"] = {
-		opcode = "10000011",
+		opcode = "10010011",
 		size = 16,
 	},
 }
@@ -165,7 +165,7 @@ local arch = {
 			["DIV"] = 	{opcode = "00100", form = "dec:instr:third:second:first"},
 			["REM"] = 	{opcode = "00101", form = "dec:instr:third:second:first"},
 			["ABS"] = 	{opcode = "00110", form = "dec:instr:third:second:first"},
-			["NOT"] = 	{opcode = "00111", form = "dec:instr:third:second:first"},
+			["NOT"] = 	{opcode = "00111", form = "dec:instr:third:nop:first"},
 			["AND"] = 	{opcode = "01000", form = "dec:instr:third:second:first"},
 			["NAND"] = 	{opcode = "01001", form = "dec:instr:third:second:first"},
 			["OR"] = 	{opcode = "01010", form = "dec:instr:third:second:first"},

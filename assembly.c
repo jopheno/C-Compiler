@@ -643,6 +643,9 @@ void decode_instr(char* IC_type, Lno* node) {
         second->type = LABEL;
         second->data.label = third_name;
 
+        // Once it's an IF_FALSE statement, it must invert the boolean reply in order to
+        // get the correct branch.
+        add_instr(ALU, "NOT", third, NULL, third, NULL);
         add_instr(PRG, "JMPCi", third, second, NULL, NULL);
         
 
@@ -677,7 +680,7 @@ void decode_instr(char* IC_type, Lno* node) {
         third->type = LABEL;
         third->data.label = node->result.addr.string;
 
-        add_instr(PRG, "JMP", third, NULL, NULL, NULL);
+        add_instr(PRG, "JMPi", third, NULL, NULL, NULL);
         
 
         regm_free();
