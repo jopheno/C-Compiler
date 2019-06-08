@@ -6,7 +6,6 @@
 #include "lex.h"
 #include "util.h"
 #include "assembly.h"
-#include "bison.tab.h"
 
 int EchoSource = FALSE;
 int TraceScan = FALSE;
@@ -78,7 +77,7 @@ int runCompiler(char* source_file, bool debug_mode, bool ja_mode, char* output_f
 	}
 
 	lines_number = 1;
-	fprintf(stdout, ">> Initializing Bison ...\n");
+	fprintf(stdout, "\n>> Initializing Bison ...\n");
 
 	openFile(source_file);
 

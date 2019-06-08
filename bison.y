@@ -31,6 +31,7 @@ extern FILE* bison_output;
 %}
 
 %start program
+%token ENDFILE
 %token ERROR
 %token IF ELSE WHILE RETURN IMPORT
 %token VOID INT

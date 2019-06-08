@@ -5,7 +5,6 @@
 
 #include "globals.h"
 #include "lex.h"
-#include "bison.tab.h"
 
 /* lexeme of identifier or reserved word */
 char tokenString[MAXTOKENLEN+1];

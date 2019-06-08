@@ -16,10 +16,8 @@
 #include <regex.h>
 
 #ifndef YYPARSER
-
-#include "bison.tab.h"
-#define ENDFILE 0
-
+  #include "bison.tab.h"
+  #define ENDFILE 0
 #endif
 
 #ifndef FALSE
@@ -39,15 +37,40 @@
 # define YYTOKENTYPE
   enum yytokentype {
     /* book-keeping tokens */
-    ENDFILE,ERROR,
+    ENDFILE = 258,
+    ERROR = 259,
     /* reserved words */
-    IF,ELSE,WHILE,RETURN,IMPORT,
+    IF = 260,
+    ELSE = 261,
+    WHILE = 262,
+    RETURN = 263,
+    IMPORT = 264,
     /* variable types */
-    VOID,INT,
+    VOID = 265,
+    INT = 266,
     /* multicharacter tokens */
-    ID,NUM,
+    ID = 267,
+    NUM = 268,
     /* special symbols */
-    ASSIGN,EQ,DIFF,LT,LET,GT,GET,PLUS,MINUS,TIMES,OVER,LPAREN,RPAREN,LBRACKET,RBRACKET,LCBRACE,RCBRACE,SEMI,COMMA
+    ASSIGN = 269,
+    EQ = 270,
+    DIFF = 271,
+    LT = 272,
+    LET = 273,
+    GT = 274,
+    GET = 275,
+    PLUS = 276,
+    MINUS = 277,
+    TIMES = 278,
+    OVER = 279,
+    LPAREN = 280,
+    RPAREN = 281,
+    LBRACKET = 282,
+    RBRACKET = 283,
+    LCBRACE = 284,
+    RCBRACE = 285,
+    SEMI = 286,
+    COMMA = 287
   };
 
 #endif
