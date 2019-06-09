@@ -103,7 +103,7 @@ void init_regm() {
 
 void init_assembly(FILE* file) {
     if (file == NULL)
-    { 
+    {
         printf("Unable to open file, redirecting to stdout\n");
         ja_file = stdout;
 
@@ -189,7 +189,7 @@ j_reg_manager_t* regm_alloc () {
             reg->reg.memloc = -1;
 
             reg->freed = false;
-            
+
 
             return reg;
         } else {
@@ -230,17 +230,17 @@ j_reg_manager_t* regm_load ( char * name, char * scope, j_var_list* list) {
                 third->type = REG;
                 third->data.reg = &reg->reg;
                 add_instr(DMA, "LOADi", third, NULL, first, NULL);
-            
+
                 strcpy(reg->name, name);
                 strcpy(reg->scope, scope);
                 if (bl->passBYreference == 1)
                     reg->reg.ref = true;
                 else
                     reg->reg.ref = false;
-                
+
                 reg->reg.memloc = bl->memloc;
                 reg->freed = false;
-                
+
 
                 return reg;
 
@@ -327,10 +327,10 @@ void reg_backup(int i) {
             third->type = LABEL;
             third->data.label = regm[i].reg.name;
             add_instr(DMA, "STOREi", third, NULL, first, NULL);
-            
+
             regm[i].freed = true;
 
-            
+
         }
     }
 
@@ -378,7 +378,7 @@ void print_instr() {
         case ALUi:
             fprintf(ja_file, "ALUi_");
             break;
-        
+
         default:
             break;
     }
@@ -400,7 +400,7 @@ void print_instr() {
             case LABEL:
                 fprintf(ja_file, "%s", last_inst->third->data.label);
                 break;
-            
+
             default:
                 break;
         }
@@ -409,9 +409,9 @@ void print_instr() {
     if (last_inst->second != NULL) {
         if (comma)
             fprintf(ja_file, " ");
-        
+
         comma = true;
-        
+
         switch (last_inst->second->type)
         {
             case REG:
@@ -423,7 +423,7 @@ void print_instr() {
             case LABEL:
                 fprintf(ja_file, "%s", last_inst->second->data.label);
                 break;
-            
+
             default:
                 break;
         }
@@ -432,9 +432,9 @@ void print_instr() {
     if (last_inst->first != NULL) {
         if (comma)
             fprintf(ja_file, " ");
-        
+
         comma = true;
-        
+
         switch (last_inst->first->type)
         {
             case REG:
@@ -446,7 +446,7 @@ void print_instr() {
             case LABEL:
                 fprintf(ja_file, "%s", last_inst->first->data.label);
                 break;
-            
+
             default:
                 break;
         }
@@ -532,7 +532,7 @@ void handle_var(Arg* arg, char** name, char** scope, j_reg_t** reg) {
 void decode_instr(char* IC_type, Lno* node) {
     if(strcmp(IC_type, "call") == 0) {
         regm_backup();
-        
+
         j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
         first->type = LABEL;
         first->data.label = node->arg1.addr.variable->name;
@@ -540,7 +540,7 @@ void decode_instr(char* IC_type, Lno* node) {
         add_instr(PRG, "CALLi", NULL, NULL, first, NULL);
 
         regm_free();
-        
+
 
         // If there is a return value for this call, we must include a pop instruction for it.
         if (node->result.type == Bucket && node->result.addr.variable != NULL) {
@@ -560,7 +560,7 @@ void decode_instr(char* IC_type, Lno* node) {
             add_instr(DMA, "POP", third, NULL, NULL, NULL);
 
             //regm_backup();
-            
+
         }
 
         //regm_free();
@@ -571,7 +571,7 @@ void decode_instr(char* IC_type, Lno* node) {
         regm_backup();
 
         add_label(node->result.addr.variable->name);
-        
+
 
         regm_free();
     } else if (strcmp(IC_type, "end_function") == 0) {
@@ -581,7 +581,7 @@ void decode_instr(char* IC_type, Lno* node) {
         regm_backup();
 
         add_instr(PRG, "RET", NULL, NULL, NULL, NULL);
-        
+
 
         regm_free();
     } else if (strcmp(IC_type, "param") == 0) {
@@ -602,7 +602,7 @@ void decode_instr(char* IC_type, Lno* node) {
         third->data.reg = first_reg;
 
         add_instr(DMA, "POP", third, NULL, NULL, NULL);
-        
+
     } else if (strcmp(IC_type, "param_array") == 0) {
 
         // param is the way you read function parameters, to do this, we usually uses POP on joph_arch.
@@ -621,7 +621,7 @@ void decode_instr(char* IC_type, Lno* node) {
         third->data.reg = first_reg;
 
         add_instr(DMA, "POP", third, NULL, NULL, NULL);
-        
+
     } else if (strcmp(IC_type, "IF_FALSE") == 0) {
         regm_backup();
 
@@ -647,7 +647,7 @@ void decode_instr(char* IC_type, Lno* node) {
         // get the correct branch.
         add_instr(ALU, "NOT", third, NULL, third, NULL);
         add_instr(PRG, "JMPCi", third, second, NULL, NULL);
-        
+
 
         regm_free();
     } else if (strcmp(IC_type, "return") == 0) {
@@ -666,7 +666,7 @@ void decode_instr(char* IC_type, Lno* node) {
             third->data.reg = first_reg;
 
             add_instr(DMA, "PUSH", third, NULL, NULL, NULL);
-            
+
         }
         regm_backup();
 
@@ -675,20 +675,20 @@ void decode_instr(char* IC_type, Lno* node) {
         regm_free();
     } else if (strcmp(IC_type, "goto") == 0) {
         regm_backup();
-        
+
         j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
         third->type = LABEL;
         third->data.label = node->result.addr.string;
 
         add_instr(PRG, "JMPi", third, NULL, NULL, NULL);
-        
+
 
         regm_free();
     } else if (strcmp(IC_type, "label") == 0) {
         regm_backup();
 
         add_label(node->result.addr.string);
-        
+
 
         regm_free();
     } else if (strcmp(IC_type, "arg") == 0) {
@@ -696,7 +696,7 @@ void decode_instr(char* IC_type, Lno* node) {
         char* first_name = NULL;
         char* first_scope = NULL;
         j_reg_t *first_reg = NULL;
-    
+
         char* second_name = NULL;
         char* second_scope = NULL;
         j_reg_t *second_reg = NULL;
@@ -706,7 +706,7 @@ void decode_instr(char* IC_type, Lno* node) {
         j_reg_t *third_reg = NULL;
 
         handle_var(&node->result, &third_name, &third_scope, &third_reg);
-        
+
         j_var_list* l = create_var_list(first_name, first_scope, second_name, second_scope, third_name, third_scope);
 
         if (third_name != NULL && third_scope != NULL)
@@ -739,7 +739,7 @@ void decode_instr(char* IC_type, Lno* node) {
 
             add_instr(DMA, "LOAD", third, NULL, third, NULL);
             add_instr(DMA, "PUSH", third, NULL, NULL, NULL);
-            
+
         }
     } else if (strcmp(IC_type, "EQ") == 0 ||
                 strcmp(IC_type, "DIFFERENT") == 0 ||
@@ -755,12 +755,12 @@ void decode_instr(char* IC_type, Lno* node) {
         // Operations functions such as EQ | DIFFERENT | sum | sub | mult | div | GT | LT | LTEQ | GTEQ
         // usually receives three parameters that can be either registers or consts, to fix this problem
         // we will verify what kind of parameters we have and convert them all to registers, so we will be
-        // able to freely use the instruction using three registers address type. 
+        // able to freely use the instruction using three registers address type.
 
         char* first_name = NULL;
         char* first_scope = NULL;
         j_reg_t *first_reg = NULL;
-    
+
         char* second_name = NULL;
         char* second_scope = NULL;
         j_reg_t *second_reg = NULL;
@@ -777,7 +777,7 @@ void decode_instr(char* IC_type, Lno* node) {
 
         if (first_name != NULL && first_scope != NULL)
             first_reg = regm_load(first_name, first_scope, l);
-        
+
         if (second_name != NULL && second_scope != NULL)
             second_reg = regm_load(second_name, second_scope, l);
 
@@ -832,7 +832,7 @@ void decode_instr(char* IC_type, Lno* node) {
         char* first_name = NULL;
         char* first_scope = NULL;
         j_reg_t *first_reg = NULL;
-    
+
         char* second_name = NULL;
         char* second_scope = NULL;
         j_reg_t *second_reg = NULL;
@@ -873,7 +873,7 @@ void decode_instr(char* IC_type, Lno* node) {
         char* first_name = NULL;
         char* first_scope = NULL;
         j_reg_t *first_reg = NULL;
-    
+
         char* second_name = NULL;
         char* second_scope = NULL;
         j_reg_t *second_reg = NULL;
@@ -925,7 +925,7 @@ void decode_instr(char* IC_type, Lno* node) {
         char* first_name = NULL;
         char* first_scope = NULL;
         j_reg_t *first_reg = NULL;
-    
+
         char* second_name = NULL;
         char* second_scope = NULL;
         j_reg_t *second_reg = NULL;
@@ -967,7 +967,7 @@ void decode_instr(char* IC_type, Lno* node) {
         char* first_name = NULL;
         char* first_scope = NULL;
         j_reg_t *first_reg = NULL;
-    
+
         char* second_name = NULL;
         char* second_scope = NULL;
         j_reg_t *second_reg = NULL;
@@ -1010,7 +1010,7 @@ void decode_instr(char* IC_type, Lno* node) {
         char* first_name = NULL;
         char* first_scope = NULL;
         j_reg_t *first_reg = NULL;
-    
+
         char* second_name = NULL;
         char* second_scope = NULL;
         j_reg_t *second_reg = NULL;
@@ -1111,6 +1111,9 @@ void prepare_assembly(Tlist* list) {
                             p1->arg1.addr.variable = bl;
                         } else {
                             printf(">>> [0x03] An error has been found !\n");
+                            printf(">>>> prepare_assembly throws the exception.\n");
+                            printf(">>>>> curr_instr = %s\n", curr_instr);
+                            printf(">>>>> p1->arg1.addr.string = %s\n", p1->arg1.addr.string);
                         }
                     }
                     break;
@@ -1135,6 +1138,9 @@ void prepare_assembly(Tlist* list) {
                             p1->arg2.addr.variable = bl;
                         } else {
                             printf(">>> [0x03] An error has been found !\n");
+                            printf(">>>> prepare_assembly throws the exception.\n");
+                            printf(">>>>> curr_instr = %s\n", curr_instr);
+                            printf(">>>>> p1->arg2.addr.string = %s\n", p1->arg2.addr.string);
                         }
                     }
                     break;
@@ -1160,6 +1166,9 @@ void prepare_assembly(Tlist* list) {
                             p1->result.addr.variable = bl;
                         } else {
                             printf(">>> [0x03] An error has been found !\n");
+                            printf(">>>> prepare_assembly throws the exception.\n");
+                            printf(">>>>> curr_instr = %s\n", curr_instr);
+                            printf(">>>>> p1->result.addr.string = %s\n", p1->result.addr.string);
                         }
                     }
                     break;
@@ -1296,7 +1305,7 @@ void import_IO() {
     // Once I already have the final read value, I must return this value back, so, let's trigger the stack.
 
     add_instr(DMA, "PUSH", NULL, NULL, edx_arg, NULL);
-    
+
     add_instr(PRG, "RET", NULL, NULL, NULL, NULL);
 
     // Now we create the start_function for output:

@@ -68,6 +68,7 @@ id          [a-zA-Z0-9_]
 identifier  {id}+
 newline     \n
 whitespace  [ \t]+
+ignore      \r
 
 %x COMMENT_MULTI_BLOCK
 %x COMMENT_MONO_BLOCK
@@ -117,6 +118,7 @@ whitespace  [ \t]+
 {identifier}    {return ID;}
 {newline}       {lines_number++;}
 {whitespace}    {/* skip whitespace */}
+{ignore}        {/* ignore */}
 .               {return ERROR;}
 
 %%

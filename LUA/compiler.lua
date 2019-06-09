@@ -545,7 +545,7 @@ function onCompileInstruction(info)
 end
 
 function onFinish(insts)
-	local data = "WIDTH=32;\nDEPTH=128;\nADDRESS_RADIX=UNS;\nDATA_RADIX=BIN;\n\nCONTENT BEGIN\n"
+	local data = "WIDTH=32;\nDEPTH=1024;\nADDRESS_RADIX=UNS;\nDATA_RADIX=BIN;\n\nCONTENT BEGIN\n"
 
 	data = data .. "0 : 00000000000000000000000000000000;\n"
 
@@ -564,4 +564,3 @@ function onFinish(insts)
 end
 
 onStart()
-

@@ -6,13 +6,13 @@ da geração do código intermediário */
 }*/
 
 void main(void)
-{	
+{
     int x;
     int y;
     int z;
 
-    x = 4;
-    y = 3;
+    x = input();
+    y = input();
 
     //z = sum(x, y);
 
