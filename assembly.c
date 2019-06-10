@@ -80,6 +80,7 @@ void init_reg(j_reg_manager_t* regg, char* reg_name, j_reg_code_t code, char* va
     regg->reg.code = code;
     regg->reg.memloc = -1;
     regg->reg.ref = false;
+    regg->backup = true;
     regg->freed = freed;
     regg->locked = false;
 }
@@ -174,21 +175,27 @@ j_reg_manager_t* regm_alloc () {
         BucketList bl = st_lookup ( reg->name, reg->scope);
 
         if (bl != NULL) {
-            j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
-            first->type = IMMEDIATE;
-            first->data.immediate = reg->reg.memloc;
 
-            j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
-            third->type = REG;
-            third->data.reg = reg;
+            if (reg->backup) {
+                j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
+                first->type = IMMEDIATE;
+                first->data.immediate = reg->reg.memloc;
 
-            add_instr(DMA, "STOREi", third, NULL, first, NULL);
+                j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
+                third->type = REG;
+                third->data.reg = reg;
+
+                add_instr(DMA, "STOREi", third, NULL, first, NULL);
+            }
 
             strcpy(reg->name, "t0");
             strcpy(reg->scope, "global");
             reg->reg.memloc = -1;
 
             reg->freed = false;
+
+            // Don't need to save const values
+            reg->backup = false;
 
 
             return reg;
@@ -241,6 +248,24 @@ j_reg_manager_t* regm_load ( char * name, char * scope, j_var_list* list) {
                 reg->reg.memloc = bl->memloc;
                 reg->freed = false;
 
+                // There is no need to generate store for param variables
+                // and vectors.
+                
+                /*if (bl->structureid == VectorDeclaredSt ||
+                    bl->structureid == VectorParameterSt ||
+                    bl->structureid == ParameterSt)
+                    reg->backup = false;
+                else
+                    reg->backup = true;
+                */
+
+               // Params must be made a backup, vector declarations
+               // are only used for obtaining it's memory address.
+               if (bl->structureid == VectorDeclaredSt)
+                    reg->backup = false;
+                else
+                    reg->backup = true;
+
 
                 return reg;
 
@@ -273,14 +298,17 @@ j_reg_manager_t* regm_load ( char * name, char * scope, j_var_list* list) {
             BucketList bl = st_lookup ( reg->name, reg->scope);
 
             if (bl != NULL) {
-                j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
-                first->type = IMMEDIATE;
-                first->data.immediate = bl->memloc;
 
-                j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
-                third->type = LABEL;
-                third->data.label = reg->reg.name;
-                add_instr(DMA, "STOREi", third, NULL, first, NULL);
+                if (reg->backup) {
+                    j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
+                    first->type = IMMEDIATE;
+                    first->data.immediate = bl->memloc;
+
+                    j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
+                    third->type = LABEL;
+                    third->data.label = reg->reg.name;
+                    add_instr(DMA, "STOREi", third, NULL, first, NULL);
+                }
 
                 /*strcpy(reg->name, name);
                 strcpy(reg->scope, scope);
@@ -290,6 +318,11 @@ j_reg_manager_t* regm_load ( char * name, char * scope, j_var_list* list) {
                     reg->reg.ref = false;*/
 
                 reg->freed = true;
+
+                if (bl->structureid == VectorDeclaredSt)
+                    reg->backup = false;
+                else
+                    reg->backup = true;
 
                 // Once I have an available register, I can now load and
                 // and return the requested variable over this freed register.
@@ -319,14 +352,16 @@ void reg_backup(int i) {
         BucketList bl = st_lookup ( regm[i].name, regm[i].scope);
 
         if (bl != NULL) {
-            j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
-            first->type = IMMEDIATE;
-            first->data.immediate = bl->memloc;
+            if (regm[i].backup) {
+                j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
+                first->type = IMMEDIATE;
+                first->data.immediate = bl->memloc;
 
-            j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
-            third->type = LABEL;
-            third->data.label = regm[i].reg.name;
-            add_instr(DMA, "STOREi", third, NULL, first, NULL);
+                j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
+                third->type = LABEL;
+                third->data.label = regm[i].reg.name;
+                add_instr(DMA, "STOREi", third, NULL, first, NULL);
+            }
 
             regm[i].freed = true;
 
@@ -1060,6 +1095,7 @@ void decode_instr(char* IC_type, Lno* node) {
             // then search on the new generated pointer value and load it from memory.
 
             add_instr(ALU, "ADD", third, first, second, NULL);
+
             //add_instr(DMA, "LOAD", third, NULL, third, NULL);
 
         } else {

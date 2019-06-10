@@ -56,6 +56,7 @@ typedef struct reg_manager {
     char* scope;
     bool freed;
     bool locked;
+    bool backup;
 } j_reg_manager_t;
 
 typedef struct joph_var_list {
