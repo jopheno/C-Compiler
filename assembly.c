@@ -918,6 +918,7 @@ void decode_instr(char* IC_type, Lno* node) {
 
         regm_unlock();
     } else if (strcmp(IC_type, "assign_a_id") == 0 ||
+                strcmp(IC_type, "assign_a_const") == 0 ||
                 strcmp(IC_type, "assign_a_f") == 0) {
 
         // Assign identifier operations are used to assign consts or register-data values to variables.
@@ -1002,7 +1003,10 @@ void decode_instr(char* IC_type, Lno* node) {
         add_instr(DMA, "LOAD", third, NULL, first, NULL);
 
         regm_unlock();
-    } else if (strcmp(IC_type, "vector_var") == 0) {
+    } else if (strcmp(IC_type, "vector_var") == 0 ||
+               strcmp(IC_type, "vector_const") == 0 ||
+               strcmp(IC_type, "vector_exp") == 0 ||
+               strcmp(IC_type, "vector_fun") == 0) {
 
         // Assign a vector variable is used to assign to a temporary variable the value
         // found at a requested position from a vector.

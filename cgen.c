@@ -734,7 +734,6 @@ static void genExp( TreeNode * tree)
                 aux4.addr.string = aux_temp;
                 aux4.type = String;
                 L=insert_Node_List(&LIST, aux1, aux2, aux3, aux4);
-                //printf("AQUI: %s\n", aux_temp);
 
             }
             else if(p1->kind.exp==ConstK)
@@ -1081,6 +1080,41 @@ void generate_limited_temporaries(Tlist *list)
             }
             else if (strcmp(a1->op.addr.string,"vector_var")==0)
             {
+                if(a1->result.type == String)
+                {
+                    a1->result.addr.string = get_new_temp(a1->result.addr.string , 0);
+                }
+            }
+            else if (strcmp(a1->op.addr.string,"vector_const")==0)
+            {
+                if(a1->result.type == String)
+                {
+                    a1->result.addr.string = get_new_temp(a1->result.addr.string , 0);
+                }
+            }
+            else if (strcmp(a1->op.addr.string,"vector_exp")==0)
+            {
+                if(a1->arg2.type == String)
+                {
+                    aux = set_temp_used(a1->arg2.addr.string);
+                    a1->arg2.addr.string = aux.newReg;
+                    a1->arg2.address = aux.address;
+                }
+
+                if(a1->result.type == String)
+                {
+                    a1->result.addr.string = get_new_temp(a1->result.addr.string , 0);
+                }
+            }
+            else if (strcmp(a1->op.addr.string,"vector_fun")==0)
+            {
+                if(a1->arg2.type == String)
+                {
+                    aux = set_temp_used(a1->arg2.addr.string);
+                    a1->arg2.addr.string = aux.newReg;
+                    a1->arg2.address = aux.address;
+                }
+
                 if(a1->result.type == String)
                 {
                     a1->result.addr.string = get_new_temp(a1->result.addr.string , 0);
