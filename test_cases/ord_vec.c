@@ -1,10 +1,10 @@
 /* programa para ordena��o por sele��o de
    uma matriz com dez elementos. */
 
-int vet[ 10 ];
+int vet[ 255 ];
 
 int minloc ( int a[], int low, int high )
-{	int i; int x; int k;
+{	int i; int x; int k; int b;
 	k = low;
 	x = a[low];
 	i = low + 1;
@@ -19,15 +19,11 @@ int minloc ( int a[], int low, int high )
 }
 
 void sort( int a[], int low, int high)
-{	int i; int k;
+{	int i; int k; int b;
 	i = low;
 	while (i < high-1){
 		int t;
 		k = minloc(a,i,high);
-		output(15);
-		input();
-		output(k);
-		input();
 		t = a[k];
 		a[k] = a[i];
 		a[i] = t;
@@ -38,15 +34,17 @@ void sort( int a[], int low, int high)
 void main(void)
 {
 	int i;
+	int amount;
 	i = 0;
-	while (i < 10){
+	amount = input();
+	while (i < amount){
 		vet[i] = input();
 		i = i + 1;
 	}
-	sort(vet,0,10);
+	sort(vet,0,amount);
 	i = 0;
 	output(4095);
-	while (i < 10){
+	while (i < amount){
 		input();
 		output(vet[i]);
 		i = i + 1;

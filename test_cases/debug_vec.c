@@ -14,10 +14,20 @@ int lowest ( int a[], int size )
     return low;
 }
 
+int test(int a[], int i) {
+    return a[i];
+    /*int b;
+
+    b = a[i];
+    return b;*/
+}
+
 int highest ( int a[], int size )
-{ int i; int high;
+{ int i; int high; int b;
     i = 0;
     high = 0;
+    b = test(a, i);
+    a[i] = b;
     while(i < size) {
         if (a[i] > high) {
             high = a[i];
@@ -28,7 +38,7 @@ int highest ( int a[], int size )
 }
 
 void main (void)
-{ int low; int high;
+{ int low; int high; int b;
 
     vet[0] = 10;
     vet[1] = 9;
@@ -39,7 +49,7 @@ void main (void)
 
     //printf("Lowest = %d && Higher = %d\n", low, high);
     output(low);
-    input();
+    b = input();
     output(high);
 
     return 0;

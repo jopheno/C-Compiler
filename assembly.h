@@ -26,6 +26,7 @@ typedef struct joph_reg {
     j_reg_code_t code;
     bool ref;
     uint32_t memloc;
+    bool pointer;
 } j_reg_t;
 
 typedef struct joph_arg {

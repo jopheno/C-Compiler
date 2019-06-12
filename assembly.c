@@ -80,6 +80,7 @@ void init_reg(j_reg_manager_t* regg, char* reg_name, j_reg_code_t code, char* va
     regg->reg.code = code;
     regg->reg.memloc = -1;
     regg->reg.ref = false;
+    regg->reg.pointer = false;
     regg->backup = true;
     regg->freed = freed;
     regg->locked = false;
@@ -191,6 +192,8 @@ j_reg_manager_t* regm_alloc () {
             strcpy(reg->name, "t0");
             strcpy(reg->scope, "global");
             reg->reg.memloc = -1;
+            reg->reg.ref = false;
+            reg->reg.pointer = false;
 
             reg->freed = false;
 
@@ -261,10 +264,13 @@ j_reg_manager_t* regm_load ( char * name, char * scope, j_var_list* list) {
 
                // Params must be made a backup, vector declarations
                // are only used for obtaining it's memory address.
-               if (bl->structureid == VectorDeclaredSt)
+               if (bl->structureid == VectorDeclaredSt) {
                     reg->backup = false;
-                else
+                    reg->reg.pointer = true;
+                } else {
                     reg->backup = true;
+                    reg->reg.pointer = false;
+               }
 
 
                 return reg;
@@ -319,10 +325,13 @@ j_reg_manager_t* regm_load ( char * name, char * scope, j_var_list* list) {
 
                 reg->freed = true;
 
-                if (bl->structureid == VectorDeclaredSt)
+                if (bl->structureid == VectorDeclaredSt) {
                     reg->backup = false;
-                else
+                    reg->reg.pointer = true;
+                } else {
                     reg->backup = true;
+                    reg->reg.pointer = false;
+                }
 
                 // Once I have an available register, I can now load and
                 // and return the requested variable over this freed register.
@@ -685,7 +694,8 @@ void decode_instr(char* IC_type, Lno* node) {
 
 
         regm_free();
-    } else if (strcmp(IC_type, "return") == 0) {
+    } else if (strcmp(IC_type, "return") == 0 ||
+                strcmp(IC_type, "return_array") == 0) {
 
         if (node->result.type == Bucket && node->result.addr.variable != NULL) {
             char* first_name = node->result.addr.variable->name;
@@ -699,6 +709,9 @@ void decode_instr(char* IC_type, Lno* node) {
             j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
             third->type = REG;
             third->data.reg = first_reg;
+            
+            if (strcmp(IC_type, "return_array") == 0)
+                add_instr(DMA, "LOAD", third, NULL, third, NULL);
 
             add_instr(DMA, "PUSH", third, NULL, NULL, NULL);
 
@@ -753,7 +766,31 @@ void decode_instr(char* IC_type, Lno* node) {
         third->type = REG;
         third->data.reg = third_reg;
 
-        add_instr(DMA, "PUSH", third, NULL, NULL, NULL);
+        if (!third_reg->pointer)
+            add_instr(DMA, "PUSH", NULL, NULL, third, NULL);
+        else {
+            // If VectorDeclaredSt ...
+            j_arg_t* immediate = (j_arg_t*) malloc(sizeof(j_arg_t));
+            immediate->type = IMMEDIATE;
+            immediate->data.immediate = third_reg->memloc;
+
+            j_reg_t* reg = regm_alloc();
+
+            j_arg_t* reg_arg = (j_arg_t*) malloc(sizeof(j_arg_t));
+            reg_arg->type = REG;
+            reg_arg->data.reg = reg;
+
+            j_arg_t* const_arg = (j_arg_t*) malloc(sizeof(j_arg_t));
+            const_arg->type = IMMEDIATE;
+            const_arg->data.immediate = third_reg->memloc;
+
+            // XOR is used to empty the register.
+            add_instr(ALU, "XOR", reg_arg, reg_arg, reg_arg, NULL);
+
+            // Now we make a simple ADDi instruction.
+            add_instr(ALUi, "ADD", reg_arg, const_arg, NULL, NULL);
+            add_instr(DMA, "PUSH", NULL, NULL, reg_arg, NULL);
+        }
 
         regm_unlock();
 

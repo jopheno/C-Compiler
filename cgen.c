@@ -487,6 +487,7 @@ static void genStmt( TreeNode * tree)
                 }
 
                 //while(p1!=NULL)
+                // Inverting arguments before calling a function.
                 for(int i = n_args-1; i>=0; i--)
                 {
                     p1 = brothers[i];
@@ -1056,28 +1057,6 @@ void generate_limited_temporaries(Tlist *list)
                         a1->result.addr.string = get_new_temp(a1->result.addr.string,0);
                 }
             }
-            else if (strcmp(a1->op.addr.string,"swlwReg")==0)
-            {
-                if(strcmp(a1->arg1.addr.string,"sw")==0)
-                {
-                    lreg = getUltimateReg();
-                    if(lreg!=NULL)
-                    {
-                        a1->result.addr.string = lreg;
-                    }
-                    else
-                        a1->result.addr.string = "R0";
-                }
-                else
-                {
-                    if(lreg!=NULL)
-                        a1->result.addr.string = lreg;
-                    else
-                        a1->result.addr.string = "R0";
-
-
-                }
-            }
             else if (strcmp(a1->op.addr.string,"vector_var")==0)
             {
                 if(a1->result.type == String)
@@ -1218,7 +1197,8 @@ void generate_limited_temporaries(Tlist *list)
                 {
                     aux = set_temp_used(a1->result.addr.string);
                     a1->result.addr.string = aux.newReg;
-                    a1->result.address = aux.address;                }
+                    a1->result.address = aux.address;
+                }
 
             }
             else if (strcmp(a1->op.addr.string,"assign_a_a")==0)
@@ -1289,10 +1269,20 @@ void generate_limited_temporaries(Tlist *list)
             {
                 if(a1->result.type == String)
                 {
-                    if(strcmp(a1->result.addr.string,"void")!=0)
+                    if(strcmp(a1->result.addr.string,"void")!=0) {
                         aux = set_temp_used(a1->result.addr.string);
                         a1->result.addr.string = aux.newReg;
                         a1->result.address = aux.address;
+                    }
+                }
+            }
+            else if (strcmp(a1->op.addr.string,"return_array")==0)
+            {
+                if(a1->result.type == String)
+                {
+                    aux = set_temp_used(a1->result.addr.string);
+                    a1->result.addr.string = aux.newReg;
+                    a1->result.address = aux.address;
                 }
             }
             else if (strcmp(a1->op.addr.string,"array_var")==0)
