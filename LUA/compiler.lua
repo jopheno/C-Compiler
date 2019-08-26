@@ -176,6 +176,8 @@ local arch = {
 			["SLT"] = 	{opcode = "10001", form = "dec:instr:third:second:first"},
 			["SGT"] = 	{opcode = "10010", form = "dec:instr:third:second:first"},
 			["SDT"] = 	{opcode = "10011", form = "dec:instr:third:second:first"},
+			["SLET"] = 	{opcode = "10101", form = "dec:instr:third:second:first"},
+			["SGET"] = 	{opcode = "10110", form = "dec:instr:third:second:first"},
 		}
 	},
 
@@ -200,6 +202,8 @@ local arch = {
 			["SLT"] = 	{opcode = "10001", form = "dec:instr:third:im16"},
 			["SGT"] = 	{opcode = "10010", form = "dec:instr:third:im16"},
 			["SDT"] = 	{opcode = "10011", form = "dec:instr:third:im16"},
+			["SLET"] = 	{opcode = "10101", form = "dec:instr:third:im16"},
+			["SGET"] = 	{opcode = "10110", form = "dec:instr:third:im16"},
 		}
 	},
 

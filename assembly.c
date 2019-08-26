@@ -887,13 +887,13 @@ void decode_instr(char* IC_type, Lno* node) {
         else if (strcmp(IC_type, "LT") == 0)
             add_instr(ALU, "SLT", third, second, first, NULL);
         else if (strcmp(IC_type, "LTEQ") == 0) {
-            add_instr(ALU, "SLT", third, second, first, NULL);
-            //add_instr(ALU, "SLET", third, second, first, NULL);
-            printf(">>> NOT YET IMPLEMENTED -> USING < INSTEAD !!!\n");
+            //add_instr(ALU, "SLT", third, second, first, NULL);
+            add_instr(ALU, "SLET", third, second, first, NULL);
+            //printf(">>> NOT YET IMPLEMENTED -> USING < INSTEAD !!!\n");
         } else if (strcmp(IC_type, "GTEQ") == 0) {
-            add_instr(ALU, "SGT", third, second, first, NULL);
-            //add_instr(ALU, "SGET", third, second, first, NULL);
-            printf(">>> NOT YET IMPLEMENTED -> USING > INSTEAD !!!\n");
+            //add_instr(ALU, "SGT", third, second, first, NULL);
+            add_instr(ALU, "SGET", third, second, first, NULL);
+            //printf(">>> NOT YET IMPLEMENTED -> USING > INSTEAD !!!\n");
         }
 
         regm_unlock();
