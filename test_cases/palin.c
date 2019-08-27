@@ -10,7 +10,7 @@ int palindromo(int a[], int low, int high){
 
 	while(l < h){
 		if(a[l] != a[h]){
-			return (0-1);
+			return 2;
 		}
 		l = l+1;
 		h = h-1;

@@ -11,7 +11,7 @@ int getprimo(int x){
 		aux = x-((x/i)*i);
 
 		if(aux == 0){
-			return (0-1);
+			return 2;
 		}
 
 		i = i+1;

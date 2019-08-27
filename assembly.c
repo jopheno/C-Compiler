@@ -170,7 +170,16 @@ j_reg_manager_t* regm_alloc () {
         return reg;
     }
 
-    printf(">> Not enough registers, I will try to free EDX register and lock it.\n");
+    printf(">> [%d] Not enough registers, I will try to free EDX register and lock it.\n", curr);
+
+    if (!reg->freed && reg->locked) {
+        printf(">> [%d] Not enough const registers, it will need at least two EDX registers.\n", curr);
+        printf(">>>> regm_alloc throws the exception.\n");
+        printf(">>>>> curr_instr = %s\n", curr_instr);
+        exit(-1);
+
+        return NULL;
+    }
 
     if (!reg->freed && reg->name != NULL && reg->scope != NULL) {
         BucketList bl = st_lookup ( reg->name, reg->scope);
@@ -211,7 +220,7 @@ j_reg_manager_t* regm_alloc () {
 
     } else {
         printf(">>> [0x02] An error has been found !\n");
-        printf(">>>> regm_alloc throws the exception.");
+        printf(">>>> regm_alloc throws the exception.\n");
         printf(">>>>> curr_instr = %s\n", curr_instr);
         exit(-1);
         return NULL;
@@ -715,6 +724,34 @@ void decode_instr(char* IC_type, Lno* node) {
 
             add_instr(DMA, "PUSH", third, NULL, NULL, NULL);
 
+        } else if (node->result.type == Constant && node->result.addr.constant) {
+
+            char* first_name = NULL;
+            char* first_scope = NULL;
+            j_reg_t *first_reg = NULL;
+
+            char* second_name = NULL;
+            char* second_scope = NULL;
+            j_reg_t *second_reg = NULL;
+
+            char* third_name = NULL;
+            char* third_scope = NULL;
+            j_reg_t *third_reg = NULL;
+
+            handle_var(&node->result, &third_name, &third_scope, &third_reg);
+
+            j_var_list* l = create_var_list(first_name, first_scope, second_name, second_scope, third_name, third_scope);
+
+            if (third_name != NULL && third_scope != NULL)
+                third_reg = regm_load(third_name, third_scope, l);
+
+            destroy_var_list(l);
+
+            j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
+            third->type = REG;
+            third->data.reg = third_reg;
+
+            add_instr(DMA, "PUSH", third, NULL, NULL, NULL);
         }
         regm_backup();
 

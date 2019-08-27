@@ -803,7 +803,7 @@ static void genExp( TreeNode * tree)
                 insert_StackOp (&STACKOP, opglobal);
             }
 
-            // There is some assignments that occurs inside IF structures that
+            // There are some assignments that occurs inside IF structures that
             // do not add assign_id_a and compare pointers to values, in order
             // to solve this problem, this line was added !
             aux1.addr.string = "assign_id_a";
@@ -854,6 +854,20 @@ static void genExp( TreeNode * tree)
                 opglobal=LIST.last->result;
                 insert_StackOp (&STACKOP, opglobal);
             }
+
+            // There are some assignments that occurs inside IF structures that
+            // do not add assign_id_a and compare pointers to values, in order
+            // to solve this problem, this line was added !
+            
+            aux1.addr.string = "assign_id_a";
+            aux1.type=String;
+            aux2.addr.string = aux_temp;
+            aux2.type = String;
+            aux3.addr.string = "_";
+            aux3.type=String;
+            aux4.addr.string = aux_temp;
+            aux4.type = String;
+            L=insert_Node_List(&LIST, aux1, aux2, aux3, aux4);
         }
         else if(p2->kind.stmt==CallK)
         {
