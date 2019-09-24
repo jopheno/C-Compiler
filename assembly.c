@@ -1392,6 +1392,8 @@ void import_IO() {
     write_immediate->data.immediate = 131; // 32'b10000011 means to read a 16 bits value
 
     // First of all we create the start_function for input:
+    //INPUT
+
     add_instr(PRG, "NOP", NULL, NULL, NULL, "input");
 
     // Once the input function does not require any further information, we will grab the amount of inputs
@@ -1423,6 +1425,7 @@ void import_IO() {
     add_instr(PRG, "RET", NULL, NULL, NULL, NULL);
 
     // Now we create the start_function for output:
+    // OUTPUT FUNCTION
 
     add_instr(PRG, "NOP", NULL, NULL, NULL, "output");
 
