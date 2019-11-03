@@ -71,7 +71,8 @@
     RCBRACE = 285,
     SEMI = 286,
     COMMA = 287,
-    INST = 288
+    INST = 288,
+    FILENAME = 289
   };
 
 #endif
@@ -130,6 +131,9 @@ typedef enum {
 typedef enum {Void,Integer,Boolean} ExpType;
 
 #define MAXCHILDREN 3
+
+#define MAX_FILE_IMPORTS 20
+#define DEFAULT_LIBRARIES_PATH "SO/libraries"
 
 typedef struct treeNode
    { struct treeNode * child[MAXCHILDREN];

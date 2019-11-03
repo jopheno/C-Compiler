@@ -1,5 +1,7 @@
 /* Programa para testar ponteiros e injecao de instrucoes */
 
+#include <stdio.c>
+
 void maca(void) {
 
 }
@@ -27,4 +29,8 @@ void main(void)
     }};
 
 	output(a); // Retorna posição do PC_Counter de banana :)
+
+    i = input();
+
+    output(amount);
 }

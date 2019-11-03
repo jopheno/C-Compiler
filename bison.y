@@ -35,7 +35,7 @@ extern FILE* bison_output;
 %token ERROR
 %token IF ELSE WHILE RETURN IMPORT
 %token VOID INT
-%token ID NUM INST
+%token ID NUM INST FILENAME
 %token ASSIGN EQ DIFF LT LET GT GET PLUS MINUS TIMES OVER
 %token LPAREN RPAREN LBRACKET RBRACKET LCBRACE RCBRACE SEMI COMMA REF
 %expect 1
@@ -64,6 +64,7 @@ decl_list         : decl_list decl {fprintf(bison_output, "[decl_list->decl_list
 
 decl              : var_decl {fprintf(bison_output, "[decl->var_decl]\n"); $$ = $1; }
                   | func_decl {fprintf(bison_output, "[decl->func_decl]\n"); $$ = $1; }
+                  | import_decl {fprintf(bison_output, "[decl->import_decl]\n"); }
                   | ERROR {fprintf(bison_output, "[decl->ERROR]\n"); $$ = NULL; yyerrok; }
                   ;
 
@@ -74,6 +75,11 @@ tipo_espec        : INT { fprintf(bison_output, "[tipo_espec->INT]\n");
                   | VOID { fprintf(bison_output, "[tipo_espec->VOID]\n");
                     $$ = newExpNode(TypeK);
                     $$->type = Void;
+                  }
+                  ;
+
+import_decl       : IMPORT FILENAME {
+                    fprintf(bison_output, "[import_decl->IMPORT FILENAME SEMI]\n");
                   }
                   ;
 

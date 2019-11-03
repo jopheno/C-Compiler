@@ -8,6 +8,11 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
+typedef struct import_file {
+    char* filename;
+    int line;
+} import_file_t;
+
 /* Procedure printToken prints a token
  * and its lexeme to the listing file
  */

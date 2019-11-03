@@ -82,7 +82,7 @@ void init_inst() {
 
     add_instr(PRG, "HALT", NULL, NULL, NULL, NULL);
 
-    import_IO();
+    //import_IO();
 
 }
 

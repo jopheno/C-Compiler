@@ -11,6 +11,8 @@ INIT_STATUS = {
 
 */
 
+#include <stdio.c>
+
 int os_mem[1024];
 
 void main(void) {

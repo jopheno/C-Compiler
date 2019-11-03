@@ -8,7 +8,8 @@ bison.tab.h
 bison.tab.c
 *.DS_Store
 LUA/example.ja
-LUA/output.mif
+output.mif
 exec
 bison.output
 bison.dot
+_temp.c

@@ -6,6 +6,7 @@
 /* Kenneth C. Louden                                */
 /****************************************************/
 
+#include <stdbool.h>
 #include "globals.h"
 #include "util.h"
 
@@ -14,6 +15,57 @@
 */
 
 extern int lines_number;
+
+import_file_t* imports[MAX_FILE_IMPORTS];
+int import_amount = 0;
+bool ImportErrors = false;
+
+int add_import(char* file_name, int line_number) {
+
+  // Backup first character
+  char v = file_name[0];
+
+  // Remove quotes
+	file_name = file_name+1;
+	file_name[strlen(file_name)-1] = 0;
+
+	// Verify if it is double quotes
+  char* new_filename = (char*) malloc(sizeof(char)*50);
+  if (v == '<') {
+    sprintf(new_filename, "%s/%s", DEFAULT_LIBRARIES_PATH, file_name);
+  } else {
+    sprintf(new_filename, "%s", file_name);
+  }
+
+  // Verify if there is any other import in the same line or any similar import
+  for (int i = 0; i<import_amount; i++) {
+    if (imports[i]->line == line_number) {
+      fprintf(stderr, "> Unable to import '%s' at line %d, '%s' was already imported.\n", file_name, lines_number, imports[i]->filename);
+      fprintf(stderr, ">> Consider moving '%s' to the next line.\n", new_filename);
+      ImportErrors = true;
+      return -1;
+    }
+
+    if (strcmp(imports[i]->filename, new_filename) == 0) {
+      fprintf(stderr, "> Unable to import '%s' at line %d, '%s' was already imported.\n", file_name, lines_number, imports[i]->filename);
+      ImportErrors = true;
+      return -1;
+    }
+  }
+
+  import_file_t* new_import = (import_file_t*) malloc(sizeof(import_file_t));
+  new_import->filename = (char*) malloc(strlen(new_filename));
+
+  memcpy(new_import->filename, new_filename, strlen(new_filename));
+  new_import->line = lines_number;
+
+  imports[import_amount] = new_import;
+  
+  import_amount++;
+
+  return 0;
+
+}
 
 void printToken( TokenType token, const char* tokenString )
 { 

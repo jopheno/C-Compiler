@@ -56,12 +56,14 @@ char* getTokenName(TokenType t) {
   if (t == SEMI) return "SEMI";
   if (t == COMMA) return "COMMA";
   if (t == INST) return "INST";
+  if (t == FILENAME) return "FILENAME";
 
   return "NOTATOKEN";
 }
 
 %}
 
+dot         [.]
 digit       [0-9]
 number      {digit}+
 letter      [a-zA-Z_]
@@ -71,12 +73,17 @@ newline     \n
 whitespace  [ \t]+
 inst        [a-zA-Z0-9_:&]{whitespace}?
 instruction {inst}+
+filechars   [a-zA-Z0-9_/\.]
+filename    {filechars}+\.{letter}+
 ignore      \r
 
 %x COMMENT_MULTI_BLOCK
 %x COMMENT_MONO_BLOCK
 %x ASSEMBLY_MULTI_BLOCK
 %x ASSEMBLY_COMMENT_MONO_BLOCK
+
+%x IMPORTING
+%x IMPORTING_ENDING
 
 %%
 
@@ -101,7 +108,12 @@ ignore      \r
 <ASSEMBLY_COMMENT_MONO_BLOCK>"\n"         {lines_number++; BEGIN(ASSEMBLY_MULTI_BLOCK);}
 <ASSEMBLY_COMMENT_MONO_BLOCK>.            {}
 
-"import"        {return IMPORT;}
+"#include"                        {BEGIN(IMPORTING); return IMPORT;}
+<IMPORTING>"\""{filename}"\""     {BEGIN(INITIAL); return FILENAME;}
+<IMPORTING>"<"{filename}">"       {BEGIN(INITIAL); return FILENAME;}
+<IMPORTING>{whitespace}           {/* skip whitespace */}
+<IMPORTING>{ignore}               {/* ignore */}
+<IMPORTING>.                      {return ERROR;}
 
 "if"            {return IF;}
 "else"          {return ELSE;}

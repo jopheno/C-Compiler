@@ -17,7 +17,6 @@ static int function_main = 0;
 static int search_for_main = 1;
 int typeVoid;
 int returnVoid;
-int add_in_out = 0;
 BucketList bl;
 BucketList funct_arg;
 
@@ -65,24 +64,12 @@ static void nullProc(TreeNode * t)
     else return;
 }
 
-void insert_input_output()
-{
-   st_insert("checkForInputs", FunctionSt, 1, -1, -2, "global",0,0);
-   st_insert("input", FunctionSt, 1, -1, -2, "global",0,0);
-   st_insert("output", FunctionSt, 0 , -1, -2, "global",1,0);
-}
-
 /* Procedure insertNode inserts
  * identifiers stored in t into
  * the symbol table
  */
 static void insertNode( TreeNode * t )
 {
-    if(add_in_out==0)
-    {
-        insert_input_output();
-        add_in_out = 1;
-    }
     switch (t->nodekind)
     {
     case StmtK:

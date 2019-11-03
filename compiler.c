@@ -7,6 +7,9 @@
 #include "util.h"
 #include "assembly.h"
 
+#define TEMP_FILE_SIZE 10000000
+#define TEMP_FILE_NAME "_temp.c"
+
 int EchoSource = FALSE;
 int TraceScan = FALSE;
 int TraceParse = FALSE;
@@ -25,6 +28,85 @@ int lines_number = 0;
 
 extern Tlist LIST;
 
+extern import_file_t* imports[MAX_FILE_IMPORTS];
+extern int import_amount;
+extern bool ImportErrors;
+
+int generate_final_file(char* source_file) {
+
+	if (ImportErrors) {
+		return -1;
+	}
+
+	int curr_line = 1;
+
+	FILE* source = fopen(source_file,"r");
+	if (source==NULL)
+	{
+		fprintf(stderr,"File '%s' not found\n",source_file);
+		return -1;
+	}
+
+	fseek(source, 0, SEEK_END);
+	size_t eof = ftell(source);
+	fseek(source, 0, SEEK_SET);
+
+	FILE* dest = fopen(TEMP_FILE_NAME,"w");
+	if (dest==NULL)
+	{
+		fprintf(stderr,"File '%s' could not be created\n",TEMP_FILE_NAME);
+		return -1;
+	}
+
+	char aux = 0;
+	size_t pos = 0;
+	bool skip_line = false;
+	while(pos < eof) {
+		fread(&aux, sizeof(char), 1, source);
+
+		if (!skip_line)
+			fwrite(&aux, sizeof(char), 1, dest);
+
+		pos++;
+
+		if (aux == '\n') {
+			skip_line = false;
+			curr_line++;
+
+			for (int i = 0; i<import_amount; i++) {
+				if (imports[i]->line == curr_line) {
+					FILE* temp = fopen(imports[i]->filename, "r");
+
+					if (temp==NULL)
+					{
+						fprintf(stderr,"File '%s' could not be found\n", imports[i]->filename);
+						return -1;
+					}
+
+					fseek(temp, 0, SEEK_END);
+					size_t temp_size = ftell(temp);
+					fseek(temp, 0, SEEK_SET);
+
+					char* temp_content = (char*) malloc(sizeof(char)*temp_size);
+
+					fread(temp_content, sizeof(char), temp_size, temp);
+					fwrite(temp_content, sizeof(char), temp_size, dest);
+					fflush(dest);
+					free(temp_content);
+					fclose(temp);
+
+					skip_line = true;
+				}
+			}
+		}
+	}
+
+	fflush(dest);
+	fclose(dest);
+
+	return 0;
+
+}
 
 int runCompiler(char* source_file, bool debug_mode, bool ja_mode, char* output_file) {
 
@@ -34,7 +116,7 @@ int runCompiler(char* source_file, bool debug_mode, bool ja_mode, char* output_f
 
 	// If forgot to put extension .cc, auto insert.
 	if (strchr (source_file, '.') == NULL)
-			strcat(source_file,".cc");
+		strcat(source_file,".c");
 
 	source = fopen(source_file,"r");
 	if (source==NULL)
@@ -55,7 +137,7 @@ int runCompiler(char* source_file, bool debug_mode, bool ja_mode, char* output_f
 		#endif
 	}
 
-	// This is used to show ERROR messages to STDERR
+	// This is used to send ERROR messages to STDERR
 	listing = stderr;
 	// This is used to redirect code and others debug info to STDOUT
 	code = bison_output;
@@ -65,6 +147,7 @@ int runCompiler(char* source_file, bool debug_mode, bool ja_mode, char* output_f
 	Token tok = getToken();
 
 	bool lexical_errors = false;
+	bool concat_file = false;
 
 	while(tok.type != ENDFILE) {
 
@@ -73,13 +156,34 @@ int runCompiler(char* source_file, bool debug_mode, bool ja_mode, char* output_f
 			lexical_errors = true;
 		}
 
+		if (tok.type == IMPORT) {
+			concat_file = true;
+		}
+
+		if (tok.type == FILENAME) {
+			if (concat_file == false) {
+				fprintf(stderr, "> Lexical error found at line %d near '%s' classified as '%s'\n", lines_number, tok.lexical_unit, getTokenName(tok.type));
+				lexical_errors = true;
+			} else {
+				if (debug_mode)
+					printf("\n\t\t>> Importing '%s'\n", tok.lexical_unit);
+
+				add_import(tok.lexical_unit, lines_number);
+			}
+		}
+
 		tok = getToken();
+	}
+
+	if (generate_final_file(source_file) < 0) {
+		fprintf(stdout, ">> [FATAL] Errors occured when importing files.\n");
+		exit(1);
 	}
 
 	lines_number = 1;
 	fprintf(stdout, "\n>> Initializing Bison ...\n");
 
-	openFile(source_file);
+	openFile(TEMP_FILE_NAME);
 
 	TreeNode * syntaxTree;
 
@@ -116,7 +220,7 @@ int runCompiler(char* source_file, bool debug_mode, bool ja_mode, char* output_f
 	ja_file = fopen(ja_file_name,"w");
 	if (ja_file == NULL)
 	{ 
-		printf("Unable to open %s\n",ja_file_name);
+		printf("Unable to open %s\n", ja_file_name);
 		exit(1);
 	}
 
@@ -134,7 +238,7 @@ int runCompiler(char* source_file, bool debug_mode, bool ja_mode, char* output_f
 	fclose(ja_file);
 
 	char* str = (char*) malloc(50*sizeof(char));
-	sprintf(str, "cd LUA/ && echo '../%s\n' | lua compiler.lua auto\n", ja_file_name);
+	sprintf(str, "cd LUA/ && echo '../%s\n' | lua compiler.lua auto ../output.mif\n", ja_file_name);
 
 	system(str);
 

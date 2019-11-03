@@ -48,10 +48,10 @@ bison:
 
 clean:
 	@ echo '>> Removing previous build files:'
-	rm -f $(EXEC) *.ci test_cases/*.ci lex.yy.c LUA/example.ja LUA/output.mif build/*.o bison.tab.c bison.tab.h bison.output bison.dot *.ci bison.vcg
+	rm -f $(EXEC) *.ci test_cases/*.ci lex.yy.c LUA/example.ja output.mif build/*.o bison.tab.c bison.tab.h bison.output bison.dot *.ci bison.vcg _temp.c
 	@ echo ' '
 
 cle:
 	@ echo '>> Removing previous build files:'
-	rm -f *.ci test_cases/*.ci lex.yy.c build/*.o bison.tab.c bison.tab.h bison.output bison.dot *.ci bison.vcg
+	rm -f *.ci test_cases/*.ci lex.yy.c build/*.o bison.tab.c bison.tab.h bison.output bison.dot *.ci bison.vcg _temp.c
 	@ echo ' '

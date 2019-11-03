@@ -274,12 +274,19 @@ local labels = {}
 local alabels = {}
 
 local debug = true
+local outfile_name = nil
 
 function onStart()
 	local insts = {}
 
 	if not arg[1] or arg[1] ~= "auto" then
 		debug = false
+	end
+
+	if not arg[2] then
+		outfile_name = "output.mif"
+	else
+		outfile_name = arg[2]
 	end
 
 	if not debug then print("> Enter the JophAssembly file to be read: ") end
@@ -570,7 +577,7 @@ function onFinish(insts)
 
 	data = data .. "END;\n"
 
-	local file = io.open("output.mif", 'w+')
+	local file = io.open(outfile_name, 'w+')
     file:write(data)
     file:close()
 
