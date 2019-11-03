@@ -33,6 +33,7 @@ void printToken( TokenType token, const char* tokenString )
 
     case NUM: fprintf(listing, "NUM, val= %s\n",tokenString); break;
     case ID: fprintf(listing, "ID, name= %s\n",tokenString); break;
+    case INST: fprintf(listing, "INST, name= %s\n",tokenString); break;
     case ASSIGN: fprintf(listing,"=\n"); break;
     case EQ: fprintf(listing,"==\n"); break;
     case DIFF: fprintf(listing,"!=\n"); break;
@@ -151,8 +152,11 @@ void printTree( TreeNode * tree )
         case FunctionK:
           fprintf(listing,"Function %s\n",tree->attr.name);
           break;
+        case AssemblyK:
+          fprintf(listing,"Assembly %s\n",tree->attr.name);
+          break;
         default:
-          fprintf(listing,"Unknown ExpNode kind\n");
+          fprintf(listing,"Unknown StmtNode kind\n");
           break;
       }
     }
@@ -167,6 +171,12 @@ void printTree( TreeNode * tree )
         break;
         case IdK:
         fprintf(listing,"Id: %s\n",tree->attr.name);
+        break;
+        case IdAddrK:
+        fprintf(listing,"Id Addr: %s\n",tree->attr.name);
+        break;
+        case InstructionK:
+        fprintf(listing,"Instruction: %s\n",tree->attr.name);
         break;
         default:
         fprintf(listing,"Unknown ExpNode kind\n");
@@ -236,8 +246,11 @@ void printTreeC( TreeNode * tree )
       case ReturnK:
       fprintf(listing,"RETURN \n");
       break;
+      case AssemblyK:
+      fprintf(listing,"Assembly: \n");
+      break;
       default:
-      fprintf(listing,"Unknown ExpNode kind\n");
+      fprintf(listing,"Unknown StmtNode kind\n");
       break;
     }
   }
@@ -261,8 +274,14 @@ void printTreeC( TreeNode * tree )
     case IdK:
     fprintf(listing,"Variable Used: %s\n",tree->attr.name);
     break;
+    case IdAddrK:
+    fprintf(listing,"Variable Addr Used: %s\n",tree->attr.name);
+    break;
     case VectorIdK:
     fprintf(listing,"Array Used: %s\n",tree->attr.name);
+    break;
+    case InstructionK:
+    fprintf(listing,"Instruction: %s\n",tree->attr.name);
     break;
     case TypeK:
     switch(tree->type){

@@ -55,6 +55,7 @@ char* getTokenName(TokenType t) {
 
   if (t == SEMI) return "SEMI";
   if (t == COMMA) return "COMMA";
+  if (t == INST) return "INST";
 
   return "NOTATOKEN";
 }
@@ -68,10 +69,14 @@ id          [a-zA-Z0-9_]
 identifier  {id}+
 newline     \n
 whitespace  [ \t]+
+inst        [a-zA-Z0-9_:&]{whitespace}?
+instruction {inst}+
 ignore      \r
 
 %x COMMENT_MULTI_BLOCK
 %x COMMENT_MONO_BLOCK
+%x ASSEMBLY_MULTI_BLOCK
+%x ASSEMBLY_COMMENT_MONO_BLOCK
 
 %%
 
@@ -83,6 +88,18 @@ ignore      \r
 "//"                          {BEGIN(COMMENT_MONO_BLOCK);}
 <COMMENT_MONO_BLOCK>"\n"      {lines_number++; BEGIN(INITIAL);}
 <COMMENT_MONO_BLOCK>.         {}
+
+
+"{{"                                      {BEGIN(ASSEMBLY_MULTI_BLOCK);}
+<ASSEMBLY_MULTI_BLOCK>"}}"                {BEGIN(INITIAL);}
+<ASSEMBLY_MULTI_BLOCK>"\n"                {lines_number++;}
+<ASSEMBLY_MULTI_BLOCK>{whitespace}        {/* skip whitespace */}
+<ASSEMBLY_MULTI_BLOCK>{instruction}       {return INST;}
+<ASSEMBLY_MULTI_BLOCK>{ignore}            {/* ignore */}
+
+<ASSEMBLY_MULTI_BLOCK>"//"                {BEGIN(ASSEMBLY_COMMENT_MONO_BLOCK);}
+<ASSEMBLY_COMMENT_MONO_BLOCK>"\n"         {lines_number++; BEGIN(ASSEMBLY_MULTI_BLOCK);}
+<ASSEMBLY_COMMENT_MONO_BLOCK>.            {}
 
 "import"        {return IMPORT;}
 
@@ -114,6 +131,7 @@ ignore      \r
 "}"             {return RCBRACE;}
 ";"             {return SEMI;}
 ","             {return COMMA;}
+"&"             {return REF;}
 {number}        {return NUM;}
 {identifier}    {return ID;}
 {newline}       {lines_number++;}

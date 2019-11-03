@@ -96,6 +96,7 @@ char * getStructureType( StructureId stID ) {
    case VectorParameterSt: return "VectorParameter";
    case CallFunctionSt: return "CallFunction";
    case VariableUsedSt: return "VariableUsed";
+   case VariableAddrUsedSt: return "VariableAddrUsed";
    case VariableDeclaredSt: return "VariableDeclared";
    case VectorDeclaredSt: return "VectorDeclared";
    case VectorUsedSt: return "VectorUsed";

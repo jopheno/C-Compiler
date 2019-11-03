@@ -115,6 +115,10 @@ static void insertNode( TreeNode * t )
                 typeError(t,"Function already declared or yours name was used by other structure");
             break;
 
+        case AssemblyK:
+            t->scope = scope;
+            break;
+
         case ParamK:
 
             if (regexec(&_temporary_regex, t->attr.name, 0, (regmatch_t *)NULL, 0) == 0) {
@@ -152,6 +156,9 @@ static void insertNode( TreeNode * t )
             t->scope=scope;
 
             bl = st_lookup(t->attr.name,scope);
+
+            if (bl == NULL)
+                break;
 
             int args = 0;
             TreeNode *c = t->child[0];
@@ -198,6 +205,28 @@ static void insertNode( TreeNode * t )
                 st_insert(t->attr.name, VariableUsedSt, datatype(t), t->line_number, -2, scope,0, 0);
                 t->type = bl->datatype;
             }
+
+            break;
+
+        case IdAddrK:
+            t->scope=scope;
+
+            bl = st_lookup(t->attr.name,scope);
+            if (bl == NULL)
+                /* not yet in table, so message error must be print*/
+                typeError(t,"Variable used must be declared first in order to get it's address");
+            else
+            {
+                /*already in table, so ignore location,
+                   add line number of use only */
+                st_insert(t->attr.name, VariableAddrUsedSt, datatype(t), t->line_number, -2, scope,0, 0);
+                t->type = bl->datatype;
+            }
+
+            break;
+        
+        case InstructionK: 
+            //t->scope=scope;
 
             break;
 
@@ -371,8 +400,10 @@ static void checkNode(TreeNode * t)
             if (t->child[0]->type != Integer)
                 typeError(t->child[0],"Assignment of non-integer value");
 
-            if (t->child[0]->type != t->child[1]->type)
-                typeError(t->child[0],"Invalid assignment, divergent data type");
+            // Integer type variable can receive a void procedure type (returning it's position)
+
+            //if (t->child[0]->type != t->child[1]->type)
+            //    typeError(t->child[0],"Invalid assignment, divergent data type");
             break;
 
         case WhileK:

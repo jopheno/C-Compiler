@@ -131,10 +131,18 @@ int runCompiler(char* source_file, bool debug_mode, bool ja_mode, char* output_f
 
 	generate_assembly(&LIST);
 
+	fclose(ja_file);
+
+	char* str = (char*) malloc(50*sizeof(char));
+	sprintf(str, "cd LUA/ && echo '../%s\n' | lua compiler.lua auto\n", ja_file_name);
+
+	system(str);
+
 	printf("\n>>> DONE !\n\n");
 
 	fclose(bison_output);
-	fclose(ja_file);
+
+	fflush(stdout);
 
 	return 1;
 }

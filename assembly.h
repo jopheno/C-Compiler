@@ -9,6 +9,7 @@ typedef uint8_t j_reg_code_t;
 typedef char* j_label_t;
 
 typedef enum joph_inst_type {
+    NONE = 0, // USED FOR CUSTOM INSTRUCTIONS
     PRG = 111, // 111
     DMA = 100, // 100
     ALU = 10, // 010
@@ -49,6 +50,10 @@ typedef struct joph_inst
     char* label;
 
     j_arg_t *first, *second, *third;
+
+    // For custom instructions
+    bool custom;
+    char* custom_instr;
 } j_inst_t;
 
 typedef struct reg_manager {

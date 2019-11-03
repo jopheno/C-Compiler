@@ -70,7 +70,8 @@
     LCBRACE = 284,
     RCBRACE = 285,
     SEMI = 286,
-    COMMA = 287
+    COMMA = 287,
+    INST = 288
   };
 
 #endif
@@ -109,13 +110,16 @@ typedef enum {
   CallK,
   ParamK,
   ReturnK,
-  NumberK
+  NumberK,
+  AssemblyK
 } StmtKind;
 
 typedef enum {
   OpK,
   ConstK,
   IdK,
+  IdAddrK,
+  InstructionK,
   VariableK,
   VectorK,
   VectorIdK,
@@ -149,6 +153,7 @@ typedef enum {
   CallFunctionSt,
   AssignSt,
   VariableUsedSt,
+  VariableAddrUsedSt,
   VariableDeclaredSt,
   VectorDeclaredSt,
   VectorUsedSt

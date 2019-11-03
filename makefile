@@ -4,7 +4,7 @@ CC = gcc
 
 # GCC:  (also -march=pentium etc, for machine-dependent optimizing)
 CFLAGS=
-LDFLAGS=-w #-Wall
+LDFLAGS=-ggdb -O0 -w #-Wall
 SFLAGS=
 LIBS=
 EXECLIBS=-ll -ly

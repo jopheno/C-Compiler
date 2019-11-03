@@ -260,6 +260,10 @@ local arch = {
 			["CALLi"] = 	{opcode = "10001", form = "dec:instr:nop:im16"},
 			["RET"] = 		{opcode = "10010", form = "dec:instr:none"},
 			["HALT"] = 		{opcode = "11000", form = "dec:instr:none"},
+
+			["PUSH"] = 	{opcode = "11001", form = "dec:instr:nop:nop:first"},
+			["POP"] = 	{opcode = "11010", form = "dec:instr:third:nop:nop"},
+			["SWITCH"] = 	{opcode = "11100", form = "dec:instr:nop:im16"},
 		}
 	},
 }
@@ -269,17 +273,24 @@ dofile("lib.lua")
 local labels = {}
 local alabels = {}
 
+local debug = true
 
 function onStart()
 	local insts = {}
-	print("> Enter the JophAssembly file to be read: ")
+
+	if not arg[1] or arg[1] ~= "auto" then
+		debug = false
+	end
+
+	if not debug then print("> Enter the JophAssembly file to be read: ") end
+
 	local fileName = io.read()
 
 	if fileName == "" then
 	  fileName = "example.ja"
 	end
 
-	print(">> Trying to read "..fileName.." ...")
+	if not debug then print(">> Trying to read "..fileName.." ...") end
 
 	local file, error_msg = io.open(fileName, 'rb')
 	if not file then
@@ -288,7 +299,7 @@ function onStart()
 	end
 
 	local buffer = file:read('*all')
-	print(">> File was read successfully !")
+	if not debug then print(">> File was read successfully !") end
 	file:close()
 
 	labels = {}
@@ -563,7 +574,7 @@ function onFinish(insts)
     file:write(data)
     file:close()
 
-	print("> Everything went just fine.")
+	print(">> Everything went just fine.")
 	print(">> MIF file created successfully !")
 end
 

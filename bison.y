@@ -35,9 +35,9 @@ extern FILE* bison_output;
 %token ERROR
 %token IF ELSE WHILE RETURN IMPORT
 %token VOID INT
-%token ID NUM
+%token ID NUM INST
 %token ASSIGN EQ DIFF LT LET GT GET PLUS MINUS TIMES OVER
-%token LPAREN RPAREN LBRACKET RBRACKET LCBRACE RCBRACE SEMI COMMA
+%token LPAREN RPAREN LBRACKET RBRACKET LCBRACE RCBRACE SEMI COMMA REF
 %expect 1
 
 %% /* Grammar for TINY */
@@ -210,6 +210,29 @@ ret_decl          : RETURN SEMI { fprintf(bison_output, "[ret_decl->RETURN SEMI]
                   }
                   ;
 
+lista_instruction : lista_instruction instruction {
+                    fprintf(bison_output, "[lista_instruction->lista_instruction instruction]\n");
+
+                    YYSTYPE t = $1;
+                    if (t != NULL) {
+                      while(t->sibling != NULL)
+                        t = t->sibling;
+
+                      t->sibling = $2;
+                      $$ = $1;
+                    } else {
+                      $$ = $2;
+                    }
+                  }
+                  | instruction {  fprintf(bison_output, "[lista_instruction->instruction]\n"); $$ = $1; }
+                  ;
+
+assembly_decl     : lista_instruction SEMI { fprintf(bison_output, "[assembly_decl->instruction SEMI]\n");
+                    $$ = newStmtNode(AssemblyK);
+                    $$->child[0] = $1;
+                  }
+                  ;
+
 lista_statement   : lista_statement statement { fprintf(bison_output, "[lista_statement->lista_statement statement]\n");
                     YYSTYPE t = $1;
                     if (t != NULL) {
@@ -226,7 +249,8 @@ lista_statement   : lista_statement statement { fprintf(bison_output, "[lista_st
                   //| /* vazio */ {}
                   ;
 
-statement         : exp_decl { fprintf(bison_output, "[statement->exp_decl]\n"); $$ = $1; }
+statement         : assembly_decl { fprintf(bison_output, "[statement->assembly_decl]\n"); $$ = $1; }
+                  | exp_decl { fprintf(bison_output, "[statement->exp_decl]\n"); $$ = $1; }
                   | comp_decl { fprintf(bison_output, "[statement->comp_decl]\n"); $$ = $1; }
                   | select_decl { fprintf(bison_output, "[statement->select_decl]\n"); $$ = $1; }
                   | iter_decl { fprintf(bison_output, "[statement->iter_decl]\n"); $$ = $1; }
@@ -234,6 +258,7 @@ statement         : exp_decl { fprintf(bison_output, "[statement->exp_decl]\n");
                   ;
 
 var               : identificador { fprintf(bison_output, "[var->identificador]\n"); $$ = $1; }
+                  | addr_identificador { fprintf(bison_output, "[var->addr_identificador]\n"); $$ = $1; }
                   | identificador LBRACKET exp RBRACKET { fprintf(bison_output, "[var->identificador LBRACKET exp RBRACKET]\n");
                     $$ = newExpNode(VectorIdK);
                     $$->attr.name = $1->attr.name;
@@ -346,7 +371,15 @@ numero            : NUM {fprintf(bison_output, "[NUM]\n");
                     $$->attr.val = atoi(yytext);
                   }
 
+addr_identificador : REF ID {fprintf(bison_output, "[ID] = %s\n", yytext);$$ = newExpNode(IdAddrK);
+                        $$->attr.name = copyString(yytext);}
+                  ;
+
 identificador     : ID {fprintf(bison_output, "[ID] = %s\n", yytext);$$ = newExpNode(IdK);
+                        $$->attr.name = copyString(yytext);}
+                  ;
+
+instruction       : INST {fprintf(bison_output, "[INST] = %s\n", yytext);$$ = newExpNode(InstructionK);
                         $$->attr.name = copyString(yytext);}
                   ;
 

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "assembly.h"
 #include "symtab.h"
 
@@ -11,6 +12,9 @@
 j_reg_manager_t* regm;
 
 j_inst_t* header_inst;
+j_inst_t* first_init_inst;
+j_inst_t* last_init_inst;
+j_inst_t* first_inst;
 j_inst_t* last_inst;
 
 j_reg_t* false_reg;
@@ -23,12 +27,13 @@ extern regex_t _temporary_regex;
 
 // Current line number
 int curr;
+bool to_init = false;
 
 // For debugging purposes
 char* curr_instr;
 
 void add_instr();
-void print_instr();
+void print_instr(j_inst_t* inst);
 void import_IO();
 
 // Initializing all the workspace.
@@ -43,24 +48,37 @@ void init_inst() {
 
     header_inst->line_number = curr++;
 
+    header_inst->type = PRG;
+    header_inst->func = (char*) malloc(sizeof(char)*WD_SIZE);
+    strcpy(header_inst->func, "NOP");
+    header_inst->first = NULL;
+    header_inst->second = NULL;
+    header_inst->third = NULL;
+
+    header_inst->label = "SYS_INIT";
+
+    first_init_inst = NULL;
+    last_init_inst = NULL;
+
     // Its a PRG_CALLi main
 
+    j_inst_t* main_call_inst = (j_inst_t*) malloc(sizeof(j_inst_t));
     j_arg_t* main_label_arg = (j_arg_t*) malloc(sizeof(j_arg_t));
     main_label_arg->type = LABEL;
     main_label_arg->data.label = "main";
 
-    header_inst->type = PRG;
-    header_inst->func = (char*) malloc(sizeof(char)*WD_SIZE);
-    strcpy(header_inst->func, "CALLi");
-    header_inst->first = main_label_arg;
-    header_inst->second = NULL;
-    header_inst->third = NULL;
+    main_call_inst->type = PRG;
+    main_call_inst->func = (char*) malloc(sizeof(char)*WD_SIZE);
+    strcpy(main_call_inst->func, "CALLi");
+    main_call_inst->first = main_label_arg;
+    main_call_inst->second = NULL;
+    main_call_inst->third = NULL;
 
-    header_inst->label = "START";
+    main_call_inst->label = "START";
 
-    last_inst = header_inst;
+    first_inst = main_call_inst;
 
-    print_instr();
+    last_inst = main_call_inst;
 
     add_instr(PRG, "HALT", NULL, NULL, NULL, NULL);
 
@@ -106,7 +124,7 @@ void init_regm() {
 void init_assembly(FILE* file) {
     if (file == NULL)
     {
-        printf("Unable to open file, redirecting to stdout\n");
+        fprintf(stderr, "Unable to open file, redirecting to stdout\n");
         ja_file = stdout;
 
     } else {
@@ -130,6 +148,26 @@ j_reg_manager_t* regm_lookup ( char * name, char * scope) {
     return NULL;
 }
 
+void add_custom_instr(char* instr) {
+    // Creating instruction !
+    j_inst_t* new_inst = (j_inst_t*) malloc(sizeof(j_inst_t));
+    new_inst->prox = NULL;
+
+    new_inst->line_number = curr++;
+
+    new_inst->custom = true;
+    new_inst->custom_instr = (char*) malloc(sizeof(char)*WD_SIZE);
+    strcpy(new_inst->custom_instr, instr);
+
+    if (to_init) {
+        fprintf(stderr, ">> [ERROR] Trying to add custom instruction to init.");
+        return;
+    }
+
+    last_inst->prox = new_inst;
+    last_inst = new_inst;
+}
+
 void add_instr(j_inst_type_t type, j_func_t func, j_arg_t *third, j_arg_t *second, j_arg_t *first, char* label_name) {
     // Creating instruction !
     j_inst_t* new_inst = (j_inst_t*) malloc(sizeof(j_inst_t));
@@ -145,11 +183,24 @@ void add_instr(j_inst_type_t type, j_func_t func, j_arg_t *third, j_arg_t *secon
     new_inst->third = third;
 
     new_inst->label = label_name;
+    new_inst->custom = false;
+    new_inst->custom_instr = NULL;
+
+    if (to_init) {
+        if (first_init_inst == NULL) {
+            first_init_inst = new_inst;
+            last_init_inst = new_inst;
+            return;
+        }
+
+        last_init_inst->prox = new_inst;
+        last_init_inst = new_inst;
+
+        return;
+    }
 
     last_inst->prox = new_inst;
     last_inst = new_inst;
-
-    print_instr();
 }
 
 void add_label(char* label_name) {
@@ -170,12 +221,12 @@ j_reg_manager_t* regm_alloc () {
         return reg;
     }
 
-    printf(">> [%d] Not enough registers, I will try to free EDX register and lock it.\n", curr);
+    fprintf(stderr, ">> [%d] Not enough registers, I will try to free EDX register and lock it.\n", curr);
 
     if (!reg->freed && reg->locked) {
-        printf(">> [%d] Not enough const registers, it will need at least two EDX registers.\n", curr);
-        printf(">>>> regm_alloc throws the exception.\n");
-        printf(">>>>> curr_instr = %s\n", curr_instr);
+        fprintf(stderr, ">> [%d] Not enough const registers, it will need at least two EDX registers.\n", curr);
+        fprintf(stderr, ">>>> regm_alloc throws the exception.\n");
+        fprintf(stderr, ">>>>> curr_instr = %s\n", curr_instr);
         exit(-1);
 
         return NULL;
@@ -219,9 +270,9 @@ j_reg_manager_t* regm_alloc () {
         }
 
     } else {
-        printf(">>> [0x02] An error has been found !\n");
-        printf(">>>> regm_alloc throws the exception.\n");
-        printf(">>>>> curr_instr = %s\n", curr_instr);
+        fprintf(stderr, ">>> [0x02] An error has been found !\n");
+        fprintf(stderr, ">>>> regm_alloc throws the exception.\n");
+        fprintf(stderr, ">>>>> curr_instr = %s\n", curr_instr);
         exit(-1);
         return NULL;
     }
@@ -415,9 +466,15 @@ void regm_unlock() {
 }
 
 // This will print current instruction !
-void print_instr() {
+void print_instr(j_inst_t* inst) {
     //printf("\t");
-    switch (last_inst->type)
+
+    if (inst->custom) {
+        fprintf(ja_file, "%s\n", inst->custom_instr);
+        return;
+    }
+
+    switch (inst->type)
     {
         case PRG:
             fprintf(ja_file, "PRG_");
@@ -436,22 +493,22 @@ void print_instr() {
             break;
     }
 
-    fprintf(ja_file, "%s ", last_inst->func);
+    fprintf(ja_file, "%s ", inst->func);
 
     bool comma = false;
 
-    if (last_inst->third != NULL) {
+    if (inst->third != NULL) {
         comma = true;
-        switch (last_inst->third->type)
+        switch (inst->third->type)
         {
             case REG:
-                fprintf(ja_file, "%s", last_inst->third->data.reg->name);
+                fprintf(ja_file, "%s", inst->third->data.reg->name);
                 break;
             case IMMEDIATE:
-                fprintf(ja_file, "%d", last_inst->third->data.immediate);
+                fprintf(ja_file, "%d", inst->third->data.immediate);
                 break;
             case LABEL:
-                fprintf(ja_file, "%s", last_inst->third->data.label);
+                fprintf(ja_file, "%s", inst->third->data.label);
                 break;
 
             default:
@@ -459,22 +516,22 @@ void print_instr() {
         }
     }
 
-    if (last_inst->second != NULL) {
+    if (inst->second != NULL) {
         if (comma)
             fprintf(ja_file, " ");
 
         comma = true;
 
-        switch (last_inst->second->type)
+        switch (inst->second->type)
         {
             case REG:
-                fprintf(ja_file, "%s", last_inst->second->data.reg->name);
+                fprintf(ja_file, "%s", inst->second->data.reg->name);
                 break;
             case IMMEDIATE:
-                fprintf(ja_file, "%d", last_inst->second->data.immediate);
+                fprintf(ja_file, "%d", inst->second->data.immediate);
                 break;
             case LABEL:
-                fprintf(ja_file, "%s", last_inst->second->data.label);
+                fprintf(ja_file, "%s", inst->second->data.label);
                 break;
 
             default:
@@ -482,22 +539,22 @@ void print_instr() {
         }
     }
 
-    if (last_inst->first != NULL) {
+    if (inst->first != NULL) {
         if (comma)
             fprintf(ja_file, " ");
 
         comma = true;
 
-        switch (last_inst->first->type)
+        switch (inst->first->type)
         {
             case REG:
-                fprintf(ja_file, "%s", last_inst->first->data.reg->name);
+                fprintf(ja_file, "%s", inst->first->data.reg->name);
                 break;
             case IMMEDIATE:
-                fprintf(ja_file, "%d", last_inst->first->data.immediate);
+                fprintf(ja_file, "%d", inst->first->data.immediate);
                 break;
             case LABEL:
-                fprintf(ja_file, "%s", last_inst->first->data.label);
+                fprintf(ja_file, "%s", inst->first->data.label);
                 break;
 
             default:
@@ -505,11 +562,11 @@ void print_instr() {
         }
     }
 
-    if (last_inst->label != NULL) {
+    if (inst->label != NULL) {
         if (comma)
             fprintf(ja_file, " ");
 
-        fprintf(ja_file, "::%s::", last_inst->label);
+        fprintf(ja_file, "::%s::", inst->label);
     }
 
     fprintf(ja_file, "\n");
@@ -621,12 +678,132 @@ void decode_instr(char* IC_type, Lno* node) {
     } else if (strcmp(IC_type, "start_function") == 0) {
         // start_function remembers to create a label with the name of the function to make call instructions
         // possible.
+        //regm_backup();
+
+        // param is the way you read function parameters, to do this, we usually uses POP on joph_arch.
+
+        to_init = true;
+
+        char* third_name = node->result.addr.variable->name;
+        char* third_scope = node->result.addr.variable->scope;
+
+        j_var_list* l = create_var_list(third_name, third_scope, NULL, NULL, NULL, NULL);
+
+        j_reg_t *first_reg = regm_load(third_name, third_scope, l);
+
+        destroy_var_list(l);
+
+        j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
+        third->type = REG;
+        third->data.reg = first_reg;
+
+        j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
+        first->type = LABEL;
+        first->data.label = node->result.addr.variable->name;
+
+        // XOR is used to empty the register.
+        add_instr(ALU, "XOR", third, third, third, NULL);
+
+        // Now we make a simple ADDi instruction.
+        add_instr(ALUi, "ADD", third, first, NULL, NULL);
+
         regm_backup();
+
+        to_init = false;
 
         add_label(node->result.addr.variable->name);
 
+        regm_free();
+
+    } else if (strcmp(IC_type, "start_assembly") == 0) {
+
+        regm_backup();
+
+    } else if (strcmp(IC_type, "inst") == 0) {
+
+        char* instr = node->arg1.addr.string;
+        char* scope = node->arg2.addr.string;
+        
+        int n = 0;
+
+        char** words = (char**) malloc(5*sizeof(char*));
+        int* mem_locs = (int*) malloc(5*sizeof(int));
+
+        // Initialize memory locations to -1
+        for (int i = 0; i<5; i++) {
+            mem_locs[i] = -1;
+        }
+
+        // Let's find all the words
+        char * pch;
+        pch = strtok (instr," ");
+        while (pch != NULL)
+        {
+            if (n >= 5) {
+                fprintf(stderr, "[ERROR] The instruction '%s' have more than five words.", curr_instr);
+                return;
+            }
+
+            words[n] = pch;
+
+            pch = strtok (NULL, " ");
+            n++;
+        }
+
+        // For each word, let's try to find a memory location.
+
+        char* variableName = NULL;
+
+        for (int i = 0; i<n; i++) {
+            if (words[i][0] == '&') {
+                variableName = words[i]+1;
+
+                BucketList bl = st_lookup ( variableName, scope);
+
+                if (bl == NULL) {
+                    fprintf(stderr, "[ERROR] Unable to find memory location from '%s', instruction '%s'.", variableName, curr_instr);
+                    return;
+                }
+
+                mem_locs[i] = bl->memloc;
+            }
+        }
+
+        // Now we create a whole new instruction.
+
+        char* new_instr = (char*) malloc(sizeof(char)*WD_SIZE);
+        char* aux_str = malloc(sizeof(char)*WD_SIZE);
+        char* substring = new_instr;
+
+        for (int i = 0; i<n; i++) {
+            bzero(aux_str, WD_SIZE);
+
+            if (mem_locs[i] != -1) {
+                sprintf(aux_str, "%d", mem_locs[i]);
+                memcpy(substring, aux_str, strlen(aux_str));
+            } else {
+                sprintf(aux_str, "%s", words[i]);
+                memcpy(substring, aux_str, strlen(aux_str));
+            }
+
+            if (i < (n-1))
+                substring[strlen(aux_str)] = ' ';
+
+            substring = substring + strlen(aux_str)+1;
+        }
+
+        free(aux_str);
+        free(mem_locs);
+        free(words);
+
+        //printf("> Final instruction: '%s'\n", new_instr);
+
+        add_custom_instr(new_instr);
+
+    } else if (strcmp(IC_type, "end_assembly") == 0) {
 
         regm_free();
+
     } else if (strcmp(IC_type, "end_function") == 0) {
         // usually the user inserts a return statement inside the function, however if thats not the case,
         // the compiler will include a ret instruction on the end of the function block.
@@ -1343,6 +1520,16 @@ void generate_assembly(Tlist* list) {
         }
     } else {
 
+    }
+
+    j_inst_t* it = header_inst;
+
+    header_inst->prox = first_init_inst;
+
+    last_init_inst->prox = first_inst;
+
+    for (it = header_inst; it != NULL; it = it->prox) {
+        print_instr(it);
     }
 }
 
