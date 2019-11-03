@@ -134,6 +134,7 @@ typedef enum {Void,Integer,Boolean} ExpType;
 
 #define MAX_FILE_IMPORTS 20
 #define DEFAULT_LIBRARIES_PATH "SO/libraries"
+#define TEMP_FILE_NAME "_temp.c"
 
 typedef struct treeNode
    { struct treeNode * child[MAXCHILDREN];
