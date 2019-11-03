@@ -36,43 +36,39 @@
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype {
-    /* book-keeping tokens */
     ENDFILE = 258,
     ERROR = 259,
-    /* reserved words */
     IF = 260,
     ELSE = 261,
     WHILE = 262,
     RETURN = 263,
     IMPORT = 264,
-    /* variable types */
     VOID = 265,
     INT = 266,
-    /* multicharacter tokens */
     ID = 267,
     NUM = 268,
-    /* special symbols */
-    ASSIGN = 269,
-    EQ = 270,
-    DIFF = 271,
-    LT = 272,
-    LET = 273,
-    GT = 274,
-    GET = 275,
-    PLUS = 276,
-    MINUS = 277,
-    TIMES = 278,
-    OVER = 279,
-    LPAREN = 280,
-    RPAREN = 281,
-    LBRACKET = 282,
-    RBRACKET = 283,
-    LCBRACE = 284,
-    RCBRACE = 285,
-    SEMI = 286,
-    COMMA = 287,
-    INST = 288,
-    FILENAME = 289
+    INST = 269,
+    FILENAME = 270,
+    ASSIGN = 271,
+    EQ = 272,
+    DIFF = 273,
+    LT = 274,
+    LET = 275,
+    GT = 276,
+    GET = 277,
+    PLUS = 278,
+    MINUS = 279,
+    TIMES = 280,
+    OVER = 281,
+    LPAREN = 282,
+    RPAREN = 283,
+    LBRACKET = 284,
+    RBRACKET = 285,
+    LCBRACE = 286,
+    RCBRACE = 287,
+    SEMI = 288,
+    COMMA = 289,
+    REF = 290
   };
 
 #endif

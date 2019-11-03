@@ -227,6 +227,8 @@ local arch = {
 			["POP"] = 		{opcode = "10100", form = "dec:instr:third:nop:nop"},
 			["PUSH"] = 		{opcode = "10101", form = "dec:instr:nop:nop:first"},
 			["SP"] = 		{opcode = "10110", form = "dec:instr:nop:nop:first"},
+			["REQFHDD"] = 	{opcode = "11000", form = "dec:instr:third:second:first"},
+			["REQFRAM"] = 	{opcode = "11001", form = "dec:instr:third:second:first"},
 		}
 	},
 

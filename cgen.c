@@ -1183,7 +1183,7 @@ void generate_limited_temporaries(Tlist *list)
             }
             else if (strcmp(a1->op.addr.string,"call")==0)
             {
-                if(a1->arg1.addr.variable->datatype!= 0 && a1->result.type == String)
+                if(a1->arg1.addr.variable->datatype != 0 && a1->result.type == String)
                 {
                     if(strcmp(a1->result.addr.string, "void")!=0)
                         a1->result.addr.string = get_new_temp(a1->result.addr.string,0);

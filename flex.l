@@ -123,9 +123,9 @@ ignore      \r
 "void"          {return VOID;}
 "int"           {return INT;}
 
-"="             {return ASSIGN;}
 "=="            {return EQ;}
 "!="            {return DIFF;}
+"="             {return ASSIGN;}
 "<"             {return LT;}
 "<="            {return LET;}
 ">"             {return GT;}

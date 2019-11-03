@@ -1456,10 +1456,11 @@ void prepare_assembly(Tlist* list) {
                             p1->result.type = Bucket;
                             p1->result.addr.variable = bl;
                         } else {
-                            printf(">>> [0x03] An error has been found !\n");
-                            printf(">>>> prepare_assembly throws the exception.\n");
-                            printf(">>>>> curr_instr = %s\n", curr_instr);
-                            printf(">>>>> p1->result.addr.string = %s\n", p1->result.addr.string);
+                            printf(">>> Temporary %s was declared but never used.\n", p1->result.addr.string);
+                            //printf(">>> [0x03] An error has been found !\n");
+                            //printf(">>>> prepare_assembly throws the exception.\n");
+                            //printf(">>>>> curr_instr = %s\n", curr_instr);
+                            //printf(">>>>> p1->result.addr.string = %s\n", p1->result.addr.string);
                         }
                     }
                     break;
