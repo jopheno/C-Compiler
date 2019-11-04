@@ -263,9 +263,10 @@ local arch = {
 			["RET"] = 		{opcode = "10010", form = "dec:instr:none"},
 			["HALT"] = 		{opcode = "11000", form = "dec:instr:none"},
 
-			["PUSH"] = 	{opcode = "11001", form = "dec:instr:nop:nop:first"},
-			["POP"] = 	{opcode = "11010", form = "dec:instr:third:nop:nop"},
-			["SWITCH"] = 	{opcode = "11100", form = "dec:instr:nop:im16"},
+			["PUSH"] =		{opcode = "11001", form = "dec:instr:nop:nop:first"},
+			["POP"] = 		{opcode = "11010", form = "dec:instr:third:nop:nop"},
+			["SWITCH"] = 	{opcode = "11100", form = "dec:instr:nop:nop:first"},
+			["SWITCHi"] = 	{opcode = "11101", form = "dec:instr:nop:im16"},
 		}
 	},
 }
