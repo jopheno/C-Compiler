@@ -151,6 +151,11 @@ local regs = {
 		opcode = "10010011",
 		size = 16,
 	},
+
+	["kernel"] = {
+		opcode = "01100100",
+		size = 16,
+	},
 }
 
 local arch = {
@@ -267,7 +272,24 @@ local arch = {
 			["POP"] = 		{opcode = "11010", form = "dec:instr:third:nop:nop"},
 			["SWITCH"] = 	{opcode = "11100", form = "dec:instr:nop:nop:first"},
 			["SWITCHi"] = 	{opcode = "11101", form = "dec:instr:nop:im16"},
+			["SYSCall"] = 	{opcode = "11110", form = "dec:instr:nop:nop:first"},
+			["SYSCalli"] = 	{opcode = "11111", form = "dec:instr:nop:im16"},
+			["GTP"] = 		{opcode = "01000", form = "dec:instr:nop:nop:first"},
 		}
+	},
+
+	["SCHED"] = {
+		opcode = "101",
+
+		instr = {
+			["NOP"] = 			{opcode = "00000", form = "dec:instr:nop:nop:nop"},
+			["SYSCalli"] = 		{opcode = "10001", form = "dec:instr:nop:im16"},
+			["Timeri"] = 		{opcode = "10010", form = "dec:instr:nop:im16"},
+			["DMAInti"] = 		{opcode = "10011", form = "dec:instr:nop:im16"},
+			["Start"] = 		{opcode = "00001", form = "dec:instr:nop:nop:nop"},
+			["RTimer"] = 		{opcode = "00010", form = "dec:instr:nop:nop:nop"},
+		}
+	
 	},
 }
 

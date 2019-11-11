@@ -2,8 +2,8 @@ void libSwitch(int pos, int type) {
 
     {{
         // Removes the return information that was inserted with this function call
-        // PRG_POP ecx
-        // ALU_XOR ecx ecx ecx
+        PRG_POP ecx
+        ALU_XOR ecx ecx ecx
 
         // Load the variables needed to start SWITCH
         ALU_XOR eax eax eax
