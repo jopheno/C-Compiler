@@ -154,7 +154,7 @@ local regs = {
 
 	["kernel"] = {
 		opcode = "01100100",
-		size = 16,
+		size = 32,
 	},
 }
 
@@ -266,14 +266,15 @@ local arch = {
 			["CALL"] = 		{opcode = "10000", form = "dec:instr:nop:nop:first"},
 			["CALLi"] = 	{opcode = "10001", form = "dec:instr:nop:im16"},
 			["RET"] = 		{opcode = "10010", form = "dec:instr:none"},
+			["WAIT"] = 		{opcode = "10011", form = "dec:instr:none"},
 			["HALT"] = 		{opcode = "11000", form = "dec:instr:none"},
 
 			["PUSH"] =		{opcode = "11001", form = "dec:instr:nop:nop:first"},
 			["POP"] = 		{opcode = "11010", form = "dec:instr:third:nop:nop"},
+			["GSA"] = 		{opcode = "11011", form = "dec:instr:third:nop:nop"},
 			["SWITCH"] = 	{opcode = "11100", form = "dec:instr:nop:nop:first"},
 			["SWITCHi"] = 	{opcode = "11101", form = "dec:instr:nop:im16"},
-			["SYSCall"] = 	{opcode = "11110", form = "dec:instr:nop:nop:first"},
-			["SYSCalli"] = 	{opcode = "11111", form = "dec:instr:nop:im16"},
+			["SYSCALL"] = 	{opcode = "11110", form = "dec:instr:nop:nop:nop"},
 			["GTP"] = 		{opcode = "01000", form = "dec:instr:nop:nop:first"},
 		}
 	},
@@ -288,6 +289,8 @@ local arch = {
 			["DMAInti"] = 		{opcode = "10011", form = "dec:instr:nop:im16"},
 			["Start"] = 		{opcode = "00001", form = "dec:instr:nop:nop:nop"},
 			["RTimer"] = 		{opcode = "00010", form = "dec:instr:nop:nop:nop"},
+			["RETR"] = 			{opcode = "00011", form = "dec:instr:third:nop:nop"},
+			["PC"] = 			{opcode = "00100", form = "dec:instr:third:nop:nop"},
 		}
 	
 	},
@@ -300,6 +303,9 @@ local alabels = {}
 
 local debug = true
 local outfile_name = nil
+local initial_value = nil
+local resolve_mem_addr = nil
+local inst_amount = 0
 
 function onStart()
 	local insts = {}
@@ -312,6 +318,20 @@ function onStart()
 		outfile_name = "output.mif"
 	else
 		outfile_name = arg[2]
+	end
+
+	if not arg[3] then
+		initial_value = 0
+	else
+		initial_value = tonumber(arg[3])
+	end
+
+	if not arg[4] then
+		resolve_mem_addr = 0
+	else
+		if arg[4] == "true" then
+			resolve_mem_addr = true
+		end
 	end
 
 	if not debug then print("> Enter the JophAssembly file to be read: ") end
@@ -338,7 +358,6 @@ function onStart()
 	alabels = {}
 	local lines = string.explode(buffer, "\n")
 
-
 	local line = 1
 	for index, inst in pairs(lines) do
 		if string.len(inst) > 4 then
@@ -346,6 +365,8 @@ function onStart()
 			line = line + 1
 		end
 	end
+
+	inst_amount = line-1
 
 	local line = 1
 	for index, inst in pairs(lines) do
@@ -411,7 +432,17 @@ function onPrepareInstruction(line, inst)
 	inst = string.gsub(inst, "  ", " ")
 
 	local t = string.explode(inst, "_")
-	local f = string.explode(t[2], " ")
+	local concat = ""
+
+	for i = 2, #t do
+		if i == 2 then
+			concat = concat .. t[i]
+		else
+			concat = concat .. "_" .. t[i]
+		end
+	end
+	
+	local f = string.explode(concat, " ")
 
 	--for ind, inf in pairs(t) do print("["..ind.."] "..inf) end
 	--for ind, inf in pairs(f) do print("["..ind.."] "..inf) end
@@ -466,6 +497,19 @@ function convertLabel(lb, line)
 		end
 	else
 		nline = labels[lb]
+	end
+
+	-- Verify if the first character is m from memory addr
+	if not nline then
+		if string.sub(lb, 1, 1) == "m" then
+			number = tonumber(string.sub(lb, 2, string.len(lb)))
+
+			if number and resolve_mem_addr then
+				number = number + (inst_amount + 1)
+			end
+
+			nline = number
+		end
 	end
 
 	return nline
@@ -541,7 +585,7 @@ function onCompileInstruction(info)
 			end
 
 			if not im8 then
-				onError("Unable to found a value at instruction !", info.line)
+				onError("Unable to find a value at instruction !", info.line)
 				return false
 			end
 
@@ -559,7 +603,7 @@ function onCompileInstruction(info)
 			end
 
 			if not im16 then
-				onError("Unable to found a value at instruction !", info.line)
+				onError("Unable to find a value at instruction !", info.line)
 				return false
 			end
 
@@ -577,7 +621,7 @@ function onCompileInstruction(info)
 			end
 
 			if not im24 then
-				onError("Unable to found a value at instruction !", info.line)
+				onError("Unable to find a value at instruction !", info.line)
 				return false
 			end
 
@@ -594,10 +638,10 @@ end
 function onFinish(insts)
 	local data = "WIDTH=32;\nDEPTH=1024;\nADDRESS_RADIX=UNS;\nDATA_RADIX=BIN;\n\nCONTENT BEGIN\n"
 
-	data = data .. "0 : 00000000000000000000000000000000;\n"
+	data = data ..tonumber(initial_value).." : 0000000000000000"..bits(inst_amount, 16)..";\n"
 
 	for index, inst in pairs(insts) do
-		data = data .. index.." : "..inst..";\n"
+		data = data .. (index + initial_value) .." : "..inst..";\n"
 	end
 
 	data = data .. "END;\n"

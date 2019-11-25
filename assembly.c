@@ -239,7 +239,7 @@ j_reg_manager_t* regm_alloc () {
 
             if (reg->backup) {
                 j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
-                first->type = IMMEDIATE;
+                first->type = MEM_ADDR;
                 first->data.immediate = reg->reg.memloc;
 
                 j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
@@ -294,7 +294,7 @@ j_reg_manager_t* regm_load ( char * name, char * scope, j_var_list* list) {
 
             if (bl != NULL) {
                 j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
-                first->type = IMMEDIATE;
+                first->type = MEM_ADDR;
                 first->data.immediate = bl->memloc;
                 j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
                 third->type = REG;
@@ -367,7 +367,7 @@ j_reg_manager_t* regm_load ( char * name, char * scope, j_var_list* list) {
 
                 if (reg->backup) {
                     j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
-                    first->type = IMMEDIATE;
+                    first->type = MEM_ADDR;
                     first->data.immediate = bl->memloc;
 
                     j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
@@ -423,7 +423,7 @@ void reg_backup(int i) {
         if (bl != NULL) {
             if (regm[i].backup) {
                 j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
-                first->type = IMMEDIATE;
+                first->type = MEM_ADDR;
                 first->data.immediate = bl->memloc;
 
                 j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
@@ -507,6 +507,9 @@ void print_instr(j_inst_t* inst) {
             case IMMEDIATE:
                 fprintf(ja_file, "%d", inst->third->data.immediate);
                 break;
+            case MEM_ADDR:
+                fprintf(ja_file, "m%d", inst->third->data.immediate);
+                break;
             case LABEL:
                 fprintf(ja_file, "%s", inst->third->data.label);
                 break;
@@ -530,6 +533,9 @@ void print_instr(j_inst_t* inst) {
             case IMMEDIATE:
                 fprintf(ja_file, "%d", inst->second->data.immediate);
                 break;
+            case MEM_ADDR:
+                fprintf(ja_file, "m%d", inst->second->data.immediate);
+                break;
             case LABEL:
                 fprintf(ja_file, "%s", inst->second->data.label);
                 break;
@@ -552,6 +558,9 @@ void print_instr(j_inst_t* inst) {
                 break;
             case IMMEDIATE:
                 fprintf(ja_file, "%d", inst->first->data.immediate);
+                break;
+            case MEM_ADDR:
+                fprintf(ja_file, "m%d", inst->first->data.immediate);
                 break;
             case LABEL:
                 fprintf(ja_file, "%s", inst->first->data.label);
@@ -624,6 +633,27 @@ void handle_var(Arg* arg, char** name, char** scope, j_reg_t** reg) {
 
         j_arg_t* const_arg = (j_arg_t*) malloc(sizeof(j_arg_t));
         const_arg->type = IMMEDIATE;
+        const_arg->data.immediate = arg->addr.constant;
+
+        // XOR is used to empty the register.
+        add_instr(ALU, "XOR", reg_arg, reg_arg, reg_arg, NULL);
+
+        // Now we make a simple ADDi instruction.
+        add_instr(ALUi, "ADD", reg_arg, const_arg, NULL, NULL);
+    } else if (arg->type == ADDR_Constant) {
+        // Constants are numerical values that can be converted to registers as well.
+
+        // regm_alloc is used to allocate a register for general purpose use, have in mind that once you
+        // allocated a register, it must be freed before any jumper occurs. You can only allocate one
+        // register at a time.
+        (*reg) = regm_alloc();
+
+        j_arg_t* reg_arg = (j_arg_t*) malloc(sizeof(j_arg_t));
+        reg_arg->type = REG;
+        reg_arg->data.reg = (*reg);
+
+        j_arg_t* const_arg = (j_arg_t*) malloc(sizeof(j_arg_t));
+        const_arg->type = MEM_ADDR;
         const_arg->data.immediate = arg->addr.constant;
 
         // XOR is used to empty the register.
@@ -728,10 +758,12 @@ void decode_instr(char* IC_type, Lno* node) {
 
         char** words = (char**) malloc(5*sizeof(char*));
         int* mem_locs = (int*) malloc(5*sizeof(int));
+        int* nref_mem_locs = (int*) malloc(5*sizeof(int));
 
         // Initialize memory locations to -1
         for (int i = 0; i<5; i++) {
             mem_locs[i] = -1;
+            nref_mem_locs[i] = -1;
         }
 
         // Let's find all the words
@@ -766,6 +798,17 @@ void decode_instr(char* IC_type, Lno* node) {
                 }
 
                 mem_locs[i] = bl->memloc;
+            } else if (words[i][0] == '%') {
+                variableName = words[i]+1;
+
+                BucketList bl = st_lookup ( variableName, scope);
+
+                if (bl == NULL) {
+                    fprintf(stderr, "[ERROR] Unable to find memory location from '%s', instruction '%s'.", variableName, curr_instr);
+                    return;
+                }
+
+                nref_mem_locs[i] = bl->memloc;
             }
         }
 
@@ -779,7 +822,10 @@ void decode_instr(char* IC_type, Lno* node) {
             bzero(aux_str, WD_SIZE);
 
             if (mem_locs[i] != -1) {
-                sprintf(aux_str, "%d", mem_locs[i]);
+                sprintf(aux_str, "m%d", mem_locs[i]);
+                memcpy(substring, aux_str, strlen(aux_str));
+            } else if (nref_mem_locs[i] != -1) {
+                sprintf(aux_str, "%d", nref_mem_locs[i]);
                 memcpy(substring, aux_str, strlen(aux_str));
             } else {
                 sprintf(aux_str, "%s", words[i]);
@@ -1291,7 +1337,6 @@ void decode_instr(char* IC_type, Lno* node) {
         regm_unlock();
     } else if (strcmp(IC_type, "vector_var") == 0 ||
                strcmp(IC_type, "vector_const") == 0 ||
-               strcmp(IC_type, "vector_exp") == 0 ||
                strcmp(IC_type, "vector_fun") == 0) {
 
         // Assign a vector variable is used to assign to a temporary variable the value
@@ -1354,13 +1399,87 @@ void decode_instr(char* IC_type, Lno* node) {
             // reference to a function, so the pointer is it's own memory location.
 
             j_arg_t* immediate = (j_arg_t*) malloc(sizeof(j_arg_t));
-            immediate->type = IMMEDIATE;
+            immediate->type = MEM_ADDR;
             immediate->data.immediate = first_reg->memloc;
 
             add_instr(ALU, "XOR", third, third, third, NULL);
 
             add_instr(ALUi, "ADD", third, NULL, immediate, NULL);
             add_instr(ALU, "ADD", third, third, second, NULL);
+
+            //add_instr(DMA, "LOAD", third, NULL, third, NULL);
+        }
+
+        regm_unlock();
+    } else if (strcmp(IC_type, "vector_exp") == 0) {
+
+        // Assign a vector variable is used to assign to a temporary variable the value
+        // found at a requested position from a vector.
+
+        char* first_name = NULL;
+        char* first_scope = NULL;
+        j_reg_t *first_reg = NULL;
+
+        char* second_name = NULL;
+        char* second_scope = NULL;
+        j_reg_t *second_reg = NULL;
+
+        char* third_name = NULL;
+        char* third_scope = NULL;
+        j_reg_t *third_reg = NULL;
+
+        handle_var(&node->arg1, &first_name, &first_scope, &first_reg);
+        handle_var(&node->arg2, &second_name, &second_scope, &second_reg);
+        handle_var(&node->result, &third_name, &third_scope, &third_reg);
+
+        j_var_list* l = create_var_list(first_name, first_scope, second_name, second_scope, third_name, third_scope);
+
+        if (first_name != NULL && first_scope != NULL)
+            first_reg = regm_load(first_name, first_scope, l);
+
+        if (second_name != NULL && second_scope != NULL)
+            second_reg = regm_load(second_name, second_scope, l);
+
+        if (third_name != NULL && third_scope != NULL)
+            third_reg = regm_load(third_name, third_scope, l);
+
+        destroy_var_list(l);
+
+        j_arg_t* first = (j_arg_t*) malloc(sizeof(j_arg_t));
+        first->type = REG;
+        first->data.reg = first_reg;
+
+        j_arg_t* second = (j_arg_t*) malloc(sizeof(j_arg_t));
+        second->type = REG;
+        second->data.reg = second_reg;
+
+        j_arg_t* third = (j_arg_t*) malloc(sizeof(j_arg_t));
+        third->type = REG;
+        third->data.reg = third_reg;
+
+        if (first_reg->ref) {
+            // If first_reg ref value is true, it means that this was passed by
+            // reference to a function, so the pointer is found on it's value.
+
+            // We must add to the pointer value (the read value from register) and
+            // then search on the new generated pointer value and load it from memory.
+
+            add_instr(ALU, "ADD", third, first, second, NULL);
+
+            //add_instr(DMA, "LOAD", third, NULL, third, NULL);
+
+        } else {
+            // If first_reg ref value is false, it means that this was not passed by
+            // reference to a function, so the pointer is it's own memory location.
+
+            j_arg_t* immediate = (j_arg_t*) malloc(sizeof(j_arg_t));
+            immediate->type = MEM_ADDR;
+            immediate->data.immediate = first_reg->memloc;
+
+            //add_instr(ALU, "XOR", third, third, third, NULL);
+
+            add_instr(ALUi, "ADD", third, NULL, immediate, NULL);
+            //add_instr(ALU, "ADD", third, third, second, NULL);
 
             //add_instr(DMA, "LOAD", third, NULL, third, NULL);
         }

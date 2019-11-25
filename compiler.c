@@ -25,7 +25,7 @@ int lines_number = 0;
 
 extern Tlist LIST;
 
-int runCompiler(char* source_file, bool debug_mode, bool ja_mode, char* output_file) {
+int runCompiler(char* source_file, bool debug_mode, bool ja_mode, char* output_file, int initial_value, bool bios_mode) {
 
 	if (debug_mode) {
 		TraceScan = TRUE;
@@ -155,7 +155,10 @@ int runCompiler(char* source_file, bool debug_mode, bool ja_mode, char* output_f
 	fclose(ja_file);
 
 	char* str = (char*) malloc(50*sizeof(char));
-	sprintf(str, "cd LUA/ && echo '../%s\n' | lua compiler.lua auto ../output.mif\n", ja_file_name);
+	if (bios_mode)
+		sprintf(str, "cd LUA/ && echo '../%s\n' | lua compiler.lua auto ../output.mif %d %s\n", ja_file_name, initial_value, "false");
+	else
+		sprintf(str, "cd LUA/ && echo '../%s\n' | lua compiler.lua auto ../output.mif %d %s\n", ja_file_name, initial_value, "true");
 
 	system(str);
 

@@ -71,7 +71,7 @@ id          [a-zA-Z0-9_]
 identifier  {id}+
 newline     \n
 whitespace  [ \t]+
-inst        [a-zA-Z0-9_:&]{whitespace}?
+inst        [a-zA-Z0-9_:&%]{whitespace}?
 instruction {inst}+
 filechars   [a-zA-Z0-9_/\.]
 filename    {filechars}+\.{letter}+

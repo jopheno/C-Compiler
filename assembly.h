@@ -19,6 +19,7 @@ typedef enum joph_inst_type {
 typedef enum joph_arg_type {
     REG,
     IMMEDIATE,
+    MEM_ADDR,
     LABEL
 } j_arg_type_t;
 

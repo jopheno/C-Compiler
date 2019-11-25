@@ -182,7 +182,7 @@ typedef struct BucketListRec
 
 /**************************************************/
 /****List for Intermediate Code Generation********/
-typedef enum {Bucket, String, Constant} type_union;
+typedef enum {Bucket, String, Constant, ADDR_Constant} type_union;
 typedef struct typeArg
 {
     union

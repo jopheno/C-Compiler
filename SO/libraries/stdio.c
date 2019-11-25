@@ -17,35 +17,13 @@ int input() {
 void output(int value) {
     {{
         DMA_LOADi eax &value
-        DMA_SO 131 eax
-        DMA_STOREi eax &value
+        DMA_PUSH eax
+        
+        ALU_XOR ebx ebx ebx
+        ALUi_ADD ebx 1
+        DMA_PUSH ebx
+
+        PRG_SYSCALL
+        PRG_NOP
     }};
-}
-
-int cpfhd(int from_pos, int to_pos, int size) {
-    int result;
-    {{
-        // ecx => resultado, ebx => size, eax => [ax = from_pos, aw = to_pos]
-        DMA_LOADi aw &to_pos
-        DMA_LOADi ax &from_pos
-        DMA_LOADi ebx &size
-        DMA_REQFHDD ecx ebx eax
-        DMA_STOREi ecx &result
-    }};
-
-    return result;
-}
-
-int cpfram(int from_pos, int to_pos, int size) {
-    int result;
-    {{
-        // ecx => resultado, ebx => size, eax => [ax = from_pos, aw = to_pos]
-        DMA_LOADi ax &from_pos
-        DMA_LOADi aw &to_pos
-        DMA_LOADi ebx &size
-        DMA_REQFRAM ecx ebx eax
-        DMA_STOREi ecx &result
-    }};
-
-    return result;
 }

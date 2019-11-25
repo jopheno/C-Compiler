@@ -262,8 +262,10 @@ static void genStmt( TreeNode * tree)
                     case IdAddrK:
                         aux1.addr.string = "assign_id_const";
                         aux1.type=String;
-                        aux2.addr.variable=st_lookup(p2->attr.name,p2->scope)->memloc;
-                        aux2.type=Bucket;
+                        //aux2.addr.variable=st_lookup(p2->attr.name,p2->scope)->memloc;
+                        //aux2.type=Bucket;
+                        aux2.addr.constant=st_lookup(p2->attr.name,p2->scope)->memloc;
+                        aux2.type=ADDR_Constant;
                         aux3.addr.string = "_";
                         aux3.type=String;
                         aux4.addr.variable=st_lookup(p1->attr.name,p1->scope);
@@ -345,10 +347,12 @@ static void genStmt( TreeNode * tree)
                         break;
 
                     case IdAddrK:
-                        aux1.addr.string = "assign_a_id";
+                        aux1.addr.string = "assign_a_const";
                         aux1.type=String;
-                        aux2.addr.variable=st_lookup(p2->attr.name,p2->scope)->memloc;
-                        aux2.type=Bucket;
+                        //aux2.addr.variable=st_lookup(p2->attr.name,p2->scope)->memloc;
+                        //aux2.type=Bucket;
+                        aux2.addr.constant = st_lookup(p2->attr.name,p2->scope)->memloc;
+                        aux2.type=ADDR_Constant;
                         aux3.addr.string = "_";
                         aux3.type=String;
                         aux4=LIST.last->result;
@@ -565,7 +569,7 @@ static void genStmt( TreeNode * tree)
                             aux3.addr.string = "_";
                             aux3.type=String;
                             aux4.addr.constant=bucketl->memloc;
-                            aux4.type = Constant;
+                            aux4.type = ADDR_Constant;
                             L=insert_Node_List(&LIST, aux1, aux2, aux3, aux4);
 
                         }
@@ -753,7 +757,7 @@ static void genStmt( TreeNode * tree)
                 aux3.addr.string = "_";
                 aux3.type=String;
                 aux4.addr.constant=st_lookup(p1->attr.name,p1->scope)->memloc;
-                aux4.type = Constant;
+                aux4.type = ADDR_Constant;
                 L=insert_Node_List(&LIST, aux1, aux2, aux3, aux4);
             }
             else if(p1->kind.exp==VectorIdK)
@@ -831,12 +835,12 @@ static void genExp( TreeNode * tree)
             }
             else if(p1->kind.exp==IdAddrK)
             {
-                aux1.addr.string = "vector_var";
+                aux1.addr.string = "vector_const";
                 aux1.type=String;
                 aux2.addr.variable=st_lookup(tree->attr.name,tree->scope);
                 aux2.type = Bucket;
                 aux3.addr.constant=st_lookup(p1->attr.name,p1->scope)->memloc;
-                aux3.type = Constant;
+                aux3.type = ADDR_Constant;
                 aux_temp = newTemp();
                 aux4.addr.string = aux_temp;
                 aux4.type = String;
@@ -944,7 +948,7 @@ static void genExp( TreeNode * tree)
         else if(p1->kind.exp==IdAddrK)
         {
             opglobal.addr.constant = st_lookup(p1->attr.name,p1->scope)->memloc;
-            opglobal.type = Constant;
+            opglobal.type = ADDR_Constant;
             insert_StackOp (&STACKOP, opglobal);
 
         }
@@ -1003,7 +1007,7 @@ static void genExp( TreeNode * tree)
         else if(p2->kind.exp==IdAddrK)
         {
             opglobal.addr.constant = st_lookup(p2->attr.name,p2->scope)->memloc;
-            opglobal.type = Constant;
+            opglobal.type = ADDR_Constant;
             insert_StackOp (&STACKOP, opglobal);
         }
         else if(p2->kind.exp==OpK)

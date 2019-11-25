@@ -11,10 +11,8 @@ INIT_STATUS = {
 
 */
 
-int os_mem[1024];
-
-#include <stdio.c>
-#include <stdlib.c>
+#include <io.c>
+#include <lib.c>
 
 void main(void) {
     int out;
@@ -38,13 +36,14 @@ void main(void) {
 
     input();
 
-    b = cpfhd(0, &os_mem, 1024);
-    output(b);
-    input();
-    output(11);
-    input();
+    //b = cpfhd(0, &os_mem, 2048);
+    b = cpfhd(0, 0, 2048);
+    //output(b);
+    {{
+        PRG_WAIT
+    }};
+
     libSwitch(0, 1); // First argument is the PC position, and the second argument will be the new source [0 -> ROM | 1 -> RAM]
-    output(12);
     
 }
 
