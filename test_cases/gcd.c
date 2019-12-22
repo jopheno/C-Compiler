@@ -1,5 +1,8 @@
+
 /* Um programa para calcular o mdc
    segundo o algoritmo de Euclides. */
+
+#include <stdio.c>
 
 int gcd (int u, int v)
 {       
@@ -10,6 +13,17 @@ int gcd (int u, int v)
 
 void main(void)
 {	int x; int y;
-	x = input(); y = input();
-	output(gcd(x,y));
+
+	{{
+		ALU_XOR eax eax eax
+		ALUi_ADD eax 1
+		DMA_SO 129 eax
+	}};
+
+	out(32);
+	x = in();
+	out(x);
+	y = in();
+	out(y);
+	out(gcd(x,y));
 }

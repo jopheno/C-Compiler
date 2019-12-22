@@ -1,3 +1,6 @@
+
+#include <stdio.c>
+
 void main(void) {
     int i;
 

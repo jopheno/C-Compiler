@@ -1,5 +1,7 @@
 
-int vet[ 255 ];
+int vet[ 4 ];
+
+#include <stdio.c>
 
 void sort( int a[], int low, int high)
 {	int i; int j; int k; int aux;
@@ -23,15 +25,23 @@ void sort( int a[], int low, int high)
 void main(void)
 {
 	int i;
+	int aaa;
 	i = 0;
 	while (i < 4){
-		vet[i] = input();
+		vet[i] = in();
 		i = i + 1;
 	}
 	sort(vet,0,4);
 	i = 0;
 	while (i < 4){
-		output(vet[i]);
+		out(vet[i]);
+		aaa = in();
 		i = i + 1;
+	}
+
+	while(aaa == aaa) {
+		{{
+			PRG_NOP
+		}};
 	}
 }

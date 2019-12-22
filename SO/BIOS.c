@@ -37,7 +37,7 @@ void main(void) {
     input();
 
     //b = cpfhd(0, &os_mem, 2048);
-    b = cpfhd(0, 0, 2048);
+    b = cpfhd(0, 0, 2560);
     //output(b);
     {{
         PRG_WAIT

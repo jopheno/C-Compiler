@@ -16,7 +16,8 @@
         [6] = dataStackPointer,
         [7] = PC_pos,
         [8] = PrgStackAmount,
-        [9-31] = prgContext, // 23 stacked calls
+        [9] = allocatedIndex,
+        [10-63] = prgContext, // 55 stacked calls
     }
 */
 
@@ -26,12 +27,16 @@ int curr_proc;
 int procs[20];
 int procInfo[640];
 
+// [procIOInfo]
+// 3N + 0 -> bool (is there input), 3N + 1 -> input value, 3N + 2 -> output value
+int procIOInfo[30];
+
 // [dataHeader]
 // 0 -> dataPos, 1 -> dataSize, 2 -> bool
 // 3N -> dataPos, 3N+1 -> dataSize, 3N+2 -> bool
 
 int dataHeader[30];
-int data[2000];
+int data[4800];
 
 #include <io.c>
 #include <syscalls.c>
@@ -50,11 +55,13 @@ void syscall(void) {
         DMA_STOREi aw &lastPos
     }};
 
-    procInfoPos = procs[curr_proc];
-    cachedData = procInfo[procInfoPos+5];
+    //procInfoPos = procs[2*curr_proc];
+    //cachedData = procInfo[procInfoPos+5];
+    cachedData = getCachedData(curr_proc);
 
     // DMA_POP SYSCALL type:
     {{
+        ALU_XOR eax eax eax
         DMA_POP eax
         DMA_STOREi eax &type
     }};
@@ -68,8 +75,30 @@ void syscall(void) {
         sys_input();
     }
 
+    // addProc
     if (type == 5) {
         sys_add_proc();
+        {{
+            SCHED_RTimer
+        }};
+    }
+
+    // rmProc
+    if (type == 6) {
+        sys_rm_proc();
+        {{
+            SCHED_RTimer
+        }};
+    }
+
+    // Get proc output
+    if (type == 7) {
+        sys_proc_output();
+    }
+
+    // Insert proc input
+    if (type == 8) {
+        sys_proc_input();
     }
 
     lastPos = lastPos + 1;
@@ -88,19 +117,106 @@ void timer(void) {
     int pid;
     int cachedData;
     int lastPos;
+    int esp_value;
+    int curr_psp;
+    int psp_counter;
     int aux;
 
     {{
-        SCHED_RTimer
         ALU_XOR eax eax eax
         ALU_ADD eax eax kernel
         DMA_STOREi aw &lastPos
     }};
 
+    {{
+        DMA_STOREi esp &esp_value
+    }};
+
+    // Store current stack pointer
+    setESP(curr_proc, esp_value);
+    // Store current position
+    setPC(curr_proc, lastPos);
+
+    // Get Program stack items amount
+    curr_psp = getCurrentPSP();
+    //output(32);
+    //i = input();
+    //output(curr_psp);
+    //i = input();
+
+    if (curr_psp > 55) {
+        {{
+            ALU_XOR eax eax eax
+            // ERROR E003
+            // Unable to store ProgramStack
+            // information, once it is greater
+            // than 55 values.
+            ALUi_ADD eax 57347
+            DMA_SO 131 eax
+            PRG_HALT;
+        }};
+    }
+
+    // Store program stack items amount
+    setPSP(curr_proc, curr_psp);
+
+    // For each stack item add to procTable
+    psp_counter = 0;
+    if (curr_psp > 0) {
+        while(curr_psp != 0) {
+            //aux = popFromPS();
+            {{
+                PRG_POP eax
+                PRG_NOP
+                DMA_STOREi eax &aux
+            }};
+            addPSV(curr_proc, psp_counter, aux);
+            curr_psp = curr_psp - 1;
+            psp_counter = psp_counter + 1;
+        }
+    }
+
+    // Get next process PID
     pid = getNextProcess(curr_proc);
 
+    // Set it as current process
+    curr_proc = pid;
+
+    // Get cached data memory position
     cachedData = getCachedData(pid);
-    setPC(pid, lastPos);
+
+    // Get last program counter position
+    lastPos = getPC(pid);
+
+    // For each program stack item push again into stack
+    curr_psp = getPSP(pid);
+    if (curr_psp > 0) {
+        while(curr_psp != 0) {
+
+            curr_psp = curr_psp - 1;
+
+            aux = getPSV(pid, curr_psp);
+            //pushToPS(aux);
+            {{
+                DMA_LOADi eax &aux
+                PRG_PUSH eax
+                PRG_NOP
+            }};
+        }
+    }
+
+    // Set ESP to the last used
+
+    esp_value = getESP(pid);
+
+    {{
+        ALU_XOR esp esp esp
+        DMA_LOADi esp &esp_value
+        
+        //ALU_XOR eax eax eax
+        //DMA_LOADi eax &esp_value
+        //DMA_SP eax
+    }};
 
     {{
         ALU_XOR eax eax eax
@@ -130,10 +246,36 @@ void main(void) {
     int shellProcInfoPos;
     int aux;
     int pc_pos;
+
+    // Correct PRG Stack
+
+    aux = getCurrentPSP();
+    if (aux > 0) {
+        while(aux != 0) {
+            {{
+                PRG_POP eax
+                PRG_NOP
+            }};
+            aux = aux - 1;
+        }
+    }
+
+    aux = getCurrentPSP();
+
+    if (aux != 0) {
+        {{
+            ALU_XOR eax eax eax
+            // ERROR E000
+            ALUi_ADD eax 57344
+            DMA_SO 131 eax
+            PRG_HALT;
+        }};
+    }
     
     i = 0;
     while(i < 30) {
         dataHeader[i] = 0;
+        procIOInfo[i] = 0;
         i = i + 1;
     }
 
@@ -167,6 +309,10 @@ void main(void) {
     {{
         ALU_XOR esp esp esp
         DMA_LOADi esp &aux
+        
+        //ALU_XOR eax eax eax
+        //DMA_LOADi eax &aux
+        //DMA_SP eax
     }};
 
     aux = getCachedData(shellProcId);
