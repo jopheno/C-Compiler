@@ -76,11 +76,7 @@ void main(void) {
         // ERROR E009 (just for location)
         output(57353);
         inp = input();
-        {{
-            ALU_XOR eax eax eax
-            UART_BREAD eax
-            DMA_STOREi eax &outv
-        }};
+        outv = readOverUART(1);
         output(outv);
         
     }
