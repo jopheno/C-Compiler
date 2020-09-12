@@ -294,6 +294,30 @@ local arch = {
 		}
 	
 	},
+
+	["UART"] = {
+		opcode = "110",
+
+		instr = {
+			["NOP"] = 			{opcode = "00000", form = "dec:instr:nop:nop:nop"},
+
+			["ATELL"] = 		{opcode = "00001", form = "dec:instr:third:nop:nop"},
+			["AREAD"] = 		{opcode = "00010", form = "dec:instr:third:nop:nop"},
+			["AWRITEi"] = 		{opcode = "00011", form = "dec:instr:nop:nop:im8"},
+			["AWRITE"] = 		{opcode = "00100", form = "dec:instr:nop:nop:first"},
+
+			["BTELL"] = 		{opcode = "10001", form = "dec:instr:third:nop:nop"},
+			["BREAD"] = 		{opcode = "10010", form = "dec:instr:third:nop:nop"},
+			["BWRITEi"] = 		{opcode = "10011", form = "dec:instr:nop:nop:im8"},
+			["BWRITE"] = 		{opcode = "10100", form = "dec:instr:nop:nop:first"},
+
+			["ADEBUG1"] = 		{opcode = "01001", form = "dec:instr:third:nop:nop"},
+			["ADEBUG2"] = 		{opcode = "01010", form = "dec:instr:third:nop:nop"},
+			["BDEBUG1"] = 		{opcode = "11001", form = "dec:instr:third:nop:nop"},
+			["BDEBUG2"] = 		{opcode = "11010", form = "dec:instr:third:nop:nop"},
+		}
+	
+	},
 }
 
 dofile("lib.lua")
