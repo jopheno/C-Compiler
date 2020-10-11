@@ -305,11 +305,13 @@ local arch = {
 			["AREAD"] = 		{opcode = "00010", form = "dec:instr:third:nop:nop"},
 			["AWRITEi"] = 		{opcode = "00011", form = "dec:instr:nop:nop:im8"},
 			["AWRITE"] = 		{opcode = "00100", form = "dec:instr:nop:nop:first"},
+			["ABAUDSET"] = 		{opcode = "00101", form = "dec:instr:nop:nop:first"},
 
 			["BTELL"] = 		{opcode = "10001", form = "dec:instr:third:nop:nop"},
 			["BREAD"] = 		{opcode = "10010", form = "dec:instr:third:nop:nop"},
 			["BWRITEi"] = 		{opcode = "10011", form = "dec:instr:nop:nop:im8"},
 			["BWRITE"] = 		{opcode = "10100", form = "dec:instr:nop:nop:first"},
+			["BBAUDSET"] = 		{opcode = "10101", form = "dec:instr:nop:nop:first"},
 
 			["ADEBUG1"] = 		{opcode = "01001", form = "dec:instr:third:nop:nop"},
 			["ADEBUG2"] = 		{opcode = "01010", form = "dec:instr:third:nop:nop"},

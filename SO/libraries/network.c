@@ -1,3 +1,17 @@
+void setBaudRate(int kind, int baud) {
+    if (kind == 0) {
+        {{
+            DMA_LOADi eax &baud
+            UART_ABAUDSET eax
+        }};
+    } else {
+        {{
+            DMA_LOADi eax &baud
+            UART_BBAUDSET eax
+        }};
+    }
+}
+
 void sendOverUART(int kind, int valu) {
 
     if (kind == 0) {
